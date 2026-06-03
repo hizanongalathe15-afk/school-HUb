@@ -5,7 +5,7 @@ import { connectDatabase } from './config/database.js';
 import { WebSocketService } from './services/websocketService.js';
 // Existing background job service is JavaScript; keep using it without forcing a rewrite.
 // @ts-ignore
-import { BackgroundJobService } from './services/backgroundJobService.ts';
+import { BackgroundJobService } from './services/backgroundJobService.js';
 import { connectRedis } from './services/cacheService.js';
 
 const START_PORT = Number(process.env.PORT || 5000);
