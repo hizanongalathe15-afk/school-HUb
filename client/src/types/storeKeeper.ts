@@ -13,6 +13,7 @@ export enum StoreKeeperRole {
 export interface InventoryItem {
   id: string;
   sku: string;
+  code?: string;
   name: string;
   description: string;
   category: string;
@@ -20,18 +21,24 @@ export interface InventoryItem {
   quantity: number;
   unit: string;
   unitPrice: number;
+  sellingPrice?: number;
   totalValue: number;
   reorderLevel: number;
   maxLevel?: number;
+  maxStockLevel?: number;
   location: string;
   shelf?: string;
-  supplier?: Supplier;
+  supplier?: Supplier | string;
   supplierId?: string;
   barcode?: string;
   serialNumber?: string;
   batchNumber?: string;
   expiryDate?: string;
   manufacturingDate?: string;
+  manufacturer?: string;
+  warrantyMonths?: number;
+  isTaxable?: boolean;
+  taxRate?: number;
   imageUrl?: string;
   status: 'active' | 'inactive' | 'discontinued';
   tags: string[];
@@ -79,6 +86,7 @@ export interface ReorderSuggestion {
   suggestedQuantity: number;
   supplierId?: string;
   supplierName?: string;
+  preferredSupplierId?: string;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
   notes?: string;
   reason?: string;
@@ -180,11 +188,12 @@ export interface PurchaseOrder {
   taxAmount?: number;
   discountAmount?: number;
   grandTotal: number;
-  status: 'draft' | 'pending_approval' | 'approved' | 'sent' | 'partial_delivery' | 'completed' | 'cancelled';
+  status: 'draft' | 'pending' | 'pending_approval' | 'approved' | 'sent' | 'partial_delivery' | 'completed' | 'cancelled';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   expectedDeliveryDate: string;
   actualDeliveryDate?: string;
   deliveryAddress: string;
+  shippingAddress?: string;
   paymentTerms: string;
   notes?: string;
   attachments?: string[];
@@ -222,6 +231,7 @@ export interface BorrowedItem {
   dueDate: string;
   daysOverdue: number;
   lateFee?: number;
+  itemValue?: number;
   quantity: number;
   receiptNumber?: string;
   returnStatus?: 'pending' | 'returned' | 'overdue';
@@ -245,6 +255,7 @@ export interface ReturnTransaction {
   feeAmount?: number;
   notes?: string;
   receiptNumber?: string;
+  lateFee?: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -256,6 +267,7 @@ export interface StockMovement {
   id: string;
   itemId: string;
   itemName: string;
+  itemCode?: string;
   type?: string;
   movementType: 'issue' | 'return' | 'transfer' | 'adjustment' | 'write_off';
   quantity: number;
@@ -269,6 +281,10 @@ export interface StockMovement {
   referenceNumber?: string;
   issuedTo?: string;
   issuedToName?: string;
+  issuedToType?: string;
+  department?: string;
+  purpose?: string;
+  reason?: string;
   issuedById: string;
   issuedByName: string;
   performedByName?: string;
@@ -360,9 +376,13 @@ export interface StockAlert {
   severity: 'low' | 'medium' | 'high' | 'critical';
   itemId: string;
   itemName: string;
+  category?: string;
   currentQuantity: number;
   reorderLevel?: number;
+  suggestedQuantity?: number;
   message: string;
+  details?: string;
+  suggestedAction?: string;
   action?: string;
   isRead: boolean;
   readAt?: string;
@@ -376,8 +396,11 @@ export interface StorageLocation {
   id: string;
   name: string;
   code: string;
-  type: 'storeroom' | 'shelf' | 'cabinet' | 'warehouse' | 'display';
+  type: 'storeroom' | 'shelf' | 'cabinet' | 'warehouse' | 'display' | 'coldroom' | 'container';
   section?: string;
+  row?: string;
+  shelfNumber?: string;
+  contactPhone?: string;
   responsiblePerson?: string;
   building?: string;
   floor?: string;
@@ -386,7 +409,10 @@ export interface StorageLocation {
   currentUsage?: number;
   temperature?: number;
   humidity?: number;
-  status: 'active' | 'inactive' | 'maintenance';
+  status: 'active' | 'inactive' | 'maintenance' | 'full' | 'reserved';
+  shelf?: string;
+  currentOccupancy?: number;
+  description?: string;
   items: InventoryItem[];
   notes?: string;
   createdAt: string;
@@ -478,7 +504,9 @@ export interface StoreKeeperDashboard {
   overdueBorrowings: BorrowingRecord[];
   recentMovements: StockMovement[];
   alerts: StockAlert[];
-  topMovingItems?: Array<{ itemId: string; itemName: string; movementCount: number; totalQuantity: number }>;
+  topMovingItems?: TopMovingItem[];
+  reorderSuggestions?: ReorderSuggestion[];
+  expiring7DaysCount?: number;
 }
 
 export interface StoreKeeperQuickStats {
@@ -491,6 +519,15 @@ export interface StoreKeeperQuickStats {
   overdueBorrowingsCount: number;
   monthlyIssuesCount: number;
   monthlyReturnsCount: number;
+  criticalStockCount?: number;
+  urgentRequestsCount?: number;
+  trend?: 'up' | 'down' | 'stable';
+  trendPercentage?: number;
+  lateFeesAccrued?: number;
+  monthlyIssuedValue?: number;
+  monthlyReceivedValue?: number;
+  stockTurnoverRate?: number;
+  averageRequestTime?: number;
 }
 
 // ============================================
@@ -554,3 +591,91 @@ export interface StoreKeeperApiResponse<T> {
     pages: number;
   };
 }
+
+// ============================================
+// DASHBOARD HELPER TYPES
+// ============================================
+export interface DashboardStats {
+  totalItems: number;
+  totalValue: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  pendingRequestsCount: number;
+  expiringItemsCount: number;
+  overdueBorrowingsCount: number;
+  monthlyIssuesCount: number;
+  monthlyReturnsCount: number;
+}
+
+export interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  itemName?: string;
+  quantity?: number;
+  performedBy?: string;
+  createdAt: string;
+}
+
+export interface TopMovingItem {
+  id?: string;
+  itemId: string;
+  itemName: string;
+  name?: string;
+  movementCount: number;
+  totalQuantity: number;
+  issuedCount?: number;
+}
+
+export interface AlertSummary {
+  critical: number;
+  high: number;
+  medium: number;
+  lowStock: number;
+  expiring: number;
+  outOfStock: number;
+  total?: number;
+  unread?: number;
+}
+
+export interface LocationSummary {
+  totalLocations: number;
+  activeLocations: number;
+  fullLocations: number;
+  maintenanceLocations: number;
+  totalCapacity: number;
+  currentUsage: number;
+  utilizationRate: number;
+}
+
+export interface MovementSummary {
+  totalIssues: number;
+  totalReceives: number;
+  totalReturns: number;
+  totalAdjustments: number;
+  totalWriteoffs: number;
+  totalValue: number;
+}
+
+export interface IssueRecord {
+  id: string;
+  itemId: string;
+  itemName?: string;
+  itemCode?: string;
+  quantity: number;
+  issuedToType: 'teacher' | 'student' | 'staff' | 'department';
+  issuedToId: string;
+  issuedToName: string;
+  department?: string;
+  purpose?: string;
+  expectedReturnDate?: string;
+  isBorrowable?: boolean;
+  notes?: string;
+  issuedBy?: string;
+  issuedByName?: string;
+  issuedAt: string;
+  createdAt?: string;
+  status?: 'issued' | 'returned' | 'overdue' | 'partial';
+}
+
+export type IssueHistory = IssueRecord;

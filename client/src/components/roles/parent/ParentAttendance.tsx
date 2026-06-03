@@ -19,27 +19,19 @@ import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Spinner } from '../../ui/Spinner';
 import { clsx } from 'clsx';
+import type { AttendanceRecord as BaseAttendanceRecord, ParentChild } from '../../../types/parent';
 
-interface AttendanceRecord {
-  id: string;
-  date: string;
-  status: 'present' | 'absent' | 'late' | 'excused' | 'holiday';
+type AttendanceRecord = BaseAttendanceRecord & {
+  status: BaseAttendanceRecord['status'] | 'holiday';
   checkInTime?: string;
   checkOutTime?: string;
   lateMinutes?: number;
   reason?: string;
-  markedBy: string;
+  markedBy?: string;
   remarks?: string;
-}
+};
 
-interface Child {
-  id: string;
-  firstName: string;
-  lastName: string;
-  admissionNumber: string;
-  className: string;
-  streamName?: string;
-}
+type Child = Pick<ParentChild, 'id' | 'firstName' | 'lastName' | 'admissionNumber' | 'className' | 'streamName'>;
 
 interface Statistics {
   overall: number;

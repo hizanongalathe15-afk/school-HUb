@@ -77,24 +77,36 @@ export class BackgroundJobService {
             }
           }
 
-          // Send reminders to parents
           for (const [parentId, data] of parentNotifications.entries()) {
-            const childrenNames = data.children.map((id: string) => `Child ${id}`).join(', ');
+            const students = await prisma.student.findMany({
+              where: { id: { in: data.children } },
+              select: { firstName: true, lastName: true },
+            });
+            const childrenNames = students
+              .map((student) => `${student.firstName} ${student.lastName}`.trim())
+              .join(', ') || data.children.join(', ');
             const message = `Reminder: The following children were absent yesterday: ${childrenNames}. Please ensure they attend school today.`;
-            
-            // Send via notification service (which handles SMS, email, etc. based on preferences)
+
             await notificationService.create(parentId, {
               title: 'Attendance Reminder',
               message,
-              type: 'ATTENDANCE_REMINDER' as any
+              type: 'ATTENDANCE_REMINDER' as any,
             });
-            
-            // Also send SMS directly for critical alerts
-            // In a real app, you'd get the parent's phone number from their profile
-            // const parent = await prisma.user.findUnique({ where: { id: parentId } });
-            // if (parent?.phone) {
-            //   await smsService.sendSms(parent.phone, message);
-            // }
+
+            const parent = await prisma.parent.findUnique({
+              where: { id: parentId },
+              select: { phone: true, email: true },
+            });
+            if (parent?.phone) {
+              await smsService.sendSms(parent.phone, message);
+            }
+            if (parent?.email) {
+              await emailService.create({
+                to: parent.email,
+                subject: 'Attendance Reminder',
+                text: message,
+              });
+            }
           }
           
           console.log(`Attendance reminders sent to ${parentNotifications.size} parents`);

@@ -41,6 +41,7 @@ import {
   Scatter,
   Treemap
 } from 'recharts';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
 interface ReportData {
   id: string;
@@ -53,14 +54,14 @@ interface ReportData {
     term?: string;
     academicYear?: string;
   };
-  filters: ReportFilters;
-  summary: ReportSummary;
+  filters: AnalyticsReportFilters;
+  summary: AnalyticsReportSummary;
   charts: ReportChart[];
   tables: ReportTable[];
   insights: ReportInsight[];
 }
 
-interface ReportFilters {
+interface AnalyticsReportFilters {
   classIds: string[];
   subjectIds: string[];
   studentIds: string[];
@@ -69,7 +70,7 @@ interface ReportFilters {
   includeDetailed: boolean;
 }
 
-interface ReportSummary {
+interface AnalyticsReportSummary {
   totalStudents: number;
   averageScore: number;
   passRate: number;
@@ -155,7 +156,7 @@ interface SavedReport {
   name: string;
   description: string;
   type: string;
-  filters: ReportFilters;
+  filters: AnalyticsReportFilters;
   createdAt: string;
   lastRun: string;
   schedule?: ReportSchedule;
@@ -184,7 +185,7 @@ const TeacherReportsPage: React.FC = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'generated' | 'saved' | 'scheduled'>('generated');
   
-  const [filters, setFilters] = useState<ReportFilters>({
+  const [filters, setFilters] = useState<AnalyticsReportFilters>({
     classIds: [],
     subjectIds: [],
     studentIds: [],
@@ -295,13 +296,10 @@ const TeacherReportsPage: React.FC = () => {
   const exportReport = async (reportId: string, format: 'pdf' | 'excel' | 'csv') => {
     try {
       const response = await teacherService.reports.exportReport(reportId, format);
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report_${reportId}_${new Date().toISOString().split('T')[0]}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(
+        response.data,
+        `report_${reportId}_${new Date().toISOString().split('T')[0]}.${format}`
+      );
       toast.success(`Report exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);
@@ -895,7 +893,7 @@ const TeacherReportsPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

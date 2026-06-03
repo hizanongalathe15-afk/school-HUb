@@ -234,6 +234,9 @@ export interface FeeStructure {
   activities?: number;
   miscellaneous?: number;
   total: number;
+  amount?: number;
+  description?: string;
+  paid?: number;
   dueDate?: string;
 }
 
@@ -320,7 +323,7 @@ export interface WeeklyTimetable {
 export interface DisciplineRecord {
   id: string;
   studentId: string;
-  type: 'merit' | 'demerit';
+  type: 'merit' | 'demerit' | 'positive' | 'negative';
   category: string;
   description: string;
   points: number;
@@ -341,6 +344,13 @@ export interface Streak {
 // ============================================
 // COMMUNICATION TYPES
 // ============================================
+export interface MessageAttachment {
+  url: string;
+  name: string;
+  type?: 'image' | 'audio' | 'video' | 'document' | string;
+  size?: number;
+}
+
 export interface Message {
   id: string;
   senderId: string;
@@ -351,12 +361,16 @@ export interface Message {
   recipientRole: string;
   subject: string;
   body: string;
-  attachments?: string[];
+  content: string;
+  attachments?: MessageAttachment[];
   isRead: boolean;
   readAt?: string;
   createdAt: string;
   replies?: Message[];
   conversationId?: string;
+  replyTo?: Pick<Message, 'id' | 'content' | 'body'>;
+  isEdited?: boolean;
+  status?: 'sent' | 'delivered' | 'read' | 'deleted' | 'pending';
 }
 
 export interface Conversation {
@@ -437,6 +451,9 @@ export interface ParentMeeting {
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   notes?: string;
   meetingNotes?: string;
+  meetingLink?: string;
+  childName?: string;
+  feedback?: string;
   actionItems?: string[];
   rating?: number;
 }
@@ -479,6 +496,8 @@ export interface ParentProfile {
   phone: string;
   alternatePhone?: string;
   photo?: string;
+  avatar?: string;
+  language?: string;
   address: string;
   city: string;
   country: string;
@@ -494,6 +513,8 @@ export interface ParentProfile {
     twoFactorEnabled: boolean;
     lastPasswordChange?: string;
     loginAttempts?: number;
+    loginAlerts?: boolean;
+    deviceManagement?: boolean;
   };
   createdAt: string;
   updatedAt: string;
@@ -511,6 +532,7 @@ export interface NotificationPreferences {
   eventReminders: boolean;
   announcementAlerts: boolean;
   homeworkReminders: boolean;
+  muted?: boolean;
 }
 
 export interface CommunicationPreferences {
@@ -533,6 +555,7 @@ export interface Complaint {
   description: string;
   priority: 'low' | 'normal' | 'high' | 'urgent';
   attachments?: string[];
+  attachmentUrl?: string;
   status: 'submitted' | 'under_review' | 'resolved' | 'closed' | 'pending' | 'in_progress';
   assignedTo?: string;
   assignedToName?: string;
@@ -555,6 +578,8 @@ export interface Notification {
   category?: string;
   title: string;
   message: string;
+  body?: string;
+  content?: string;
   data?: any;
   isRead: boolean;
   read?: boolean;

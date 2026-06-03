@@ -60,3 +60,52 @@ export interface MessageTemplate {
   createdAt: string;
   updatedAt: string;
 }
+
+// ============================================
+// SMS / CHAT TYPES (Admin Communication Hub)
+// ============================================
+export interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  role: string;
+  isOnline?: boolean;
+  lastSeen?: string;
+  avatar?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  members: Contact[];
+  admins?: Contact[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Attachment {
+  id?: string;
+  name: string;
+  url: string;
+  type: string;
+  size?: number;
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  sender?: {
+    id: string;
+    name?: string;
+    role?: string;
+  };
+  replyTo?: Pick<Message, 'id' | 'text'>;
+  attachments?: Attachment[];
+  timestamp: string;
+  status?: 'pending' | 'sent' | 'delivered' | 'read' | 'failed' | 'sending';
+  type?: 'sms' | 'email' | 'whatsapp' | 'telegram';
+  isStarred?: boolean;
+  chatId?: string;
+}

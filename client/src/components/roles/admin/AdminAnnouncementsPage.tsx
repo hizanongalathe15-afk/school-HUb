@@ -1,5 +1,5 @@
 // client/src/components/roles/admin/AdminAnnouncementsPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Plus, Search, Trash2, RefreshCcw, X, Upload, 
   Image, Video, FileText, Calendar, Clock, Users,
@@ -44,6 +44,7 @@ export default function AdminAnnouncementsPage() {
   const [filterType, setFilterType] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [uploadedMedia, setUploadedMedia] = useState<{ file: File; preview: string; type: string }[]>([]);
+  const dropInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => { 
     setLoading(true); 
@@ -79,6 +80,7 @@ export default function AdminAnnouncementsPage() {
       type: file.type.split('/')[0]
     }));
     setUploadedMedia([...uploadedMedia, ...newMedia]);
+    if (newMedia.length) setShowModal(true);
   };
 
   const removeMedia = (index: number) => {
@@ -156,6 +158,7 @@ export default function AdminAnnouncementsPage() {
       type: file.type.split('/')[0]
     }));
     setUploadedMedia([...uploadedMedia, ...newMedia]);
+    if (newMedia.length) setShowModal(true);
     toast.success(`${imageFiles.length} media file(s) added`);
   };
 
@@ -306,10 +309,27 @@ export default function AdminAnnouncementsPage() {
         onDragOver={(e) => e.preventDefault()} 
         onDrop={handleDrop} 
         className="drag-drop-area"
+        onClick={() => dropInputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            dropInputRef.current?.click();
+          }
+        }}
       >
         <Upload size={32} />
         <p>Drag & drop images or videos here</p>
         <small>Supports JPG, PNG, GIF, MP4, MOV</small>
+        <input
+          ref={dropInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/*"
+          onChange={handleMediaUpload}
+          style={{ display: 'none' }}
+        />
       </div>
 
       {/* Announcements Display */}

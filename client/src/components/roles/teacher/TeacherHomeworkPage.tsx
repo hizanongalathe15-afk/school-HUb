@@ -16,6 +16,8 @@ import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import EditableSelect from '../../ui/EditableSelect';
+import type { HomeworkAssignment as BaseHomeworkAssignment, HomeworkSubmission as BaseHomeworkSubmission } from '../../../types/teacher';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
 interface HomeworkAttachment {
   id: string;
@@ -25,44 +27,25 @@ interface HomeworkAttachment {
   fileSize: number;
 }
 
-interface HomeworkSubmission {
-  id: string;
-  assignmentId: string;
-  studentId: string;
-  studentName: string;
+type HomeworkSubmission = BaseHomeworkSubmission & {
   admissionNumber: string;
-  submissionDate: string;
-  status: 'submitted' | 'graded' | 'late' | 'missing';
+  status: 'submitted' | 'graded' | 'late' | 'missing' | 'pending';
   score: number | null;
   feedback: string | null;
   attachments: HomeworkAttachment[];
   gradedBy: string | null;
   gradedAt: string | null;
   comments: string | null;
-}
+};
 
-interface HomeworkAssignment {
-  id: string;
-  title: string;
-  description: string;
-  classId: string;
-  className: string;
+type HomeworkAssignment = BaseHomeworkAssignment & {
   classStream: string;
-  subjectId: string;
-  subjectName: string;
-  teacherId: string;
-  teacherName: string;
-  dueDate: string;
   dueTime: string;
-  maxMarks: number;
-  status: 'draft' | 'published' | 'archived';
   attachments: HomeworkAttachment[];
   submissions: HomeworkSubmission[];
-  createdAt: string;
-  updatedAt: string;
   publishedAt: string | null;
   notificationSent: boolean;
-}
+};
 
 interface ClassInfo {
   id: string;
@@ -264,13 +247,7 @@ const TeacherHomeworkPage: React.FC = () => {
   const downloadSubmission = async (submissionId: string, attachmentId: string, fileName: string) => {
     try {
       const response = await teacherService.homework.downloadSubmission(submissionId, attachmentId);
-      const blob = new Blob([response.data]);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(response.data, fileName);
     } catch (error) {
       console.error('Failed to download:', error);
       toast.error('Failed to download file');
@@ -280,13 +257,7 @@ const TeacherHomeworkPage: React.FC = () => {
   const downloadAllSubmissions = async (assignmentId: string) => {
     try {
       const response = await teacherService.homework.downloadAllSubmissions(assignmentId);
-      const blob = new Blob([response.data], { type: 'application/zip' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `submissions_${assignmentId}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(response.data, `submissions_${assignmentId}.zip`, 'application/zip');
       toast.success('Download started');
     } catch (error) {
       console.error('Failed to download all:', error);
@@ -926,7 +897,7 @@ const TeacherHomeworkPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

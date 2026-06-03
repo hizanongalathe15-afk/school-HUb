@@ -239,6 +239,14 @@ export const confirmationMessages = {
     cancelText: 'Cancel',
     type: 'danger',
   }),
+
+  deleteReport: (name?: string): ConfirmationOptions => ({
+    title: 'Delete Report',
+    message: `Are you sure you want to delete ${name || 'this report'}? This action cannot be undone.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    type: 'danger',
+  }),
 };
 
 /**

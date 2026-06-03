@@ -91,8 +91,8 @@ export const classesAPI = {
 // STUDENTS API
 // ============================================
 export const studentsAPI = {
-  async getMyStudents(classId?: string): Promise<{ success: boolean; data: TeacherStudent[] }> {
-    const params = classId ? { classId } : {};
+  async getMyStudents(classIdOrFilters?: string | { classId?: string }): Promise<{ success: boolean; data: TeacherStudent[] }> {
+    const params = typeof classIdOrFilters === 'object' ? classIdOrFilters : { classId: classIdOrFilters };
     const response = await api.get('/teacher/students', { params });
     return response.data;
   },
@@ -131,6 +131,12 @@ export const studentsAPI = {
     const response = await api.post(`/teacher/students/${studentId}/flag`, data);
     return response.data;
   },
+
+  addTeacherNote: async (studentId: string, data: Record<string, unknown>) => studentsAPI.addStudentNote(studentId, data as any),
+  addBehaviorRecord: async (studentId: string, data: Record<string, unknown>) => api.post(`/teacher/students/${studentId}/behavior`, data).then((res) => res.data),
+  recordParentContact: async (studentId: string, data: Record<string, unknown>) => api.post(`/teacher/students/${studentId}/parent-contact`, data).then((res) => res.data),
+  updateStudentFlag: async (studentId: string, data: Record<string, unknown>) => studentsAPI.flagStudent(studentId, data as any),
+  sendParentMessage: async (studentId: string, data: Record<string, unknown>) => api.post(`/teacher/students/${studentId}/message-parent`, data).then((res) => res.data),
 };
 
 // ============================================
@@ -195,7 +201,7 @@ export const gradesAPI = {
     return response.data;
   },
 
-  async updateGrade(gradeId: string, data: { cat1?: number; cat2?: number; cat3?: number; exam?: number }): Promise<{ success: boolean; data: GradeEntry }> {
+  async updateGrade(gradeId: string, data: { cat1?: number; cat2?: number; cat3?: number; exam?: number; comment?: string }): Promise<{ success: boolean; data: GradeEntry }> {
     const response = await api.put(`/teacher/grades/${gradeId}`, data);
     return response.data;
   },
@@ -209,25 +215,30 @@ export const gradesAPI = {
     const response = await api.get(`/teacher/grades/report-card/${classId}`, { params: { term, year } });
     return response.data;
   },
+
+  async publishResults(classId: string, term: string, year: string): Promise<{ success: boolean; data: any }> {
+    const response = await api.post(`/teacher/grades/publish/${classId}`, { term, year });
+    return response.data;
+  },
 };
 
 // ============================================
 // HOMEWORK API
 // ============================================
 export const homeworkAPI = {
-  async getHomework(classId?: string, subjectId?: string): Promise<{ success: boolean; data: HomeworkAssignment[] }> {
-    const params = { classId, subjectId };
+  async getHomework(classIdOrFilters?: string | { classId?: string; subjectId?: string; status?: string }, subjectId?: string): Promise<{ success: boolean; data: HomeworkAssignment[] }> {
+    const params = typeof classIdOrFilters === 'object'
+      ? classIdOrFilters
+      : { classId: classIdOrFilters, subjectId };
     const response = await api.get('/teacher/homework', { params });
     return response.data;
   },
 
-  async getAssignments(classId?: string, subjectId?: string): Promise<{ success: boolean; data: HomeworkAssignment[] }> {
-    const params = { classId, subjectId };
-    const response = await api.get('/teacher/homework/assignments', { params });
-    return response.data;
+  async getAssignments(classIdOrFilters?: string | { classId?: string; subjectId?: string; status?: string }, subjectId?: string): Promise<{ success: boolean; data: HomeworkAssignment[] }> {
+    return homeworkAPI.getHomework(classIdOrFilters as any, subjectId);
   },
 
-  async createHomework(data: {
+  async createHomework(data: FormData | {
     classId: string;
     subjectId: string;
     title: string;
@@ -236,11 +247,15 @@ export const homeworkAPI = {
     maxMarks: number;
     attachments?: string[];
   }): Promise<{ success: boolean; data: HomeworkAssignment }> {
+    if (data instanceof FormData) {
+      const response = await api.post('/teacher/homework', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return response.data;
+    }
     const response = await api.post('/teacher/homework', data);
     return response.data;
   },
 
-  async createAssignment(data: {
+  async createAssignment(data: FormData | {
     classId: string;
     subjectId: string;
     title: string;
@@ -249,6 +264,10 @@ export const homeworkAPI = {
     maxMarks: number;
     attachments?: string[];
   }): Promise<{ success: boolean; data: HomeworkAssignment }> {
+    if (data instanceof FormData) {
+      const response = await api.post('/teacher/homework/assignments', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return response.data;
+    }
     const response = await api.post('/teacher/homework/assignments', data);
     return response.data;
   },
@@ -293,8 +312,10 @@ export const homeworkAPI = {
     return response.data;
   },
 
-  async downloadSubmission(submissionId: string): Promise<{ success: boolean; data: { url: string } }> {
-    const response = await api.get(`/teacher/homework/submissions/${submissionId}/download`);
+  async downloadSubmission(submissionId: string, attachmentId?: string): Promise<{ success: boolean; data: { url: string } }> {
+    const response = await api.get(`/teacher/homework/submissions/${submissionId}/download`, {
+      params: attachmentId ? { attachmentId } : undefined,
+    });
     return response.data;
   },
 
@@ -303,8 +324,24 @@ export const homeworkAPI = {
     return response.data;
   },
 
-  async sendReminder(homeworkId: string, data: { message?: string }): Promise<{ success: boolean }> {
-    const response = await api.post(`/teacher/homework/${homeworkId}/reminder`, data);
+  async sendReminder(homeworkId: string, data?: { message?: string } | string): Promise<{ success: boolean }> {
+    const payload = typeof data === 'string' ? { message: data } : data;
+    const response = await api.post(`/teacher/homework/${homeworkId}/reminder`, payload ?? {});
+    return response.data;
+  },
+
+  async unpublishAssignment(homeworkId: string): Promise<{ success: boolean; data: HomeworkAssignment }> {
+    const response = await api.post(`/teacher/homework/assignments/${homeworkId}/unpublish`);
+    return response.data;
+  },
+
+  async duplicateAssignment(homeworkId: string): Promise<{ success: boolean; data: HomeworkAssignment }> {
+    const response = await api.post(`/teacher/homework/assignments/${homeworkId}/duplicate`);
+    return response.data;
+  },
+
+  async archiveAssignment(homeworkId: string): Promise<{ success: boolean; data: HomeworkAssignment }> {
+    const response = await api.post(`/teacher/homework/assignments/${homeworkId}/archive`);
     return response.data;
   },
 };
@@ -467,13 +504,17 @@ export const messagesAPI = {
     return response.data;
   },
 
-  async sendMessage(data: {
+  async sendMessage(data: FormData | {
     recipientId: string;
     recipientRole: 'parent' | 'teacher' | 'admin';
     subject: string;
     message: string;
     attachments?: string[];
   }): Promise<{ success: boolean; data: TeacherMessage }> {
+    if (data instanceof FormData) {
+      const response = await api.post('/teacher/messages', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return response.data;
+    }
     const response = await api.post('/teacher/messages', data);
     return response.data;
   },
@@ -483,12 +524,16 @@ export const messagesAPI = {
     return response.data;
   },
 
-  async sendBulkMessage(data: {
+  async sendBulkMessage(data: FormData | {
     classId: string;
     subject: string;
     message: string;
     parentIds?: string[];
   }): Promise<{ success: boolean; data: any }> {
+    if (data instanceof FormData) {
+      const response = await api.post('/teacher/messages/bulk', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return response.data;
+    }
     const response = await api.post('/teacher/messages/bulk', data);
     return response.data;
   },
@@ -508,8 +553,8 @@ export const messagesAPI = {
     return response.data;
   },
 
-  async downloadAttachment(messageId: string, attachmentId: string): Promise<{ success: boolean; data: { url: string } }> {
-    const response = await api.get(`/teacher/messages/${messageId}/attachments/${attachmentId}`);
+  async downloadAttachment(messageId: string, attachmentId?: string): Promise<{ success: boolean; data: { url: string } }> {
+    const response = await api.get(`/teacher/messages/${messageId}/attachments/${attachmentId || 'download'}`);
     return response.data;
   },
 };
@@ -555,8 +600,11 @@ export const announcementsAPI = {
 // MEETINGS API
 // ============================================
 export const meetingsAPI = {
-  async getMeetings(status?: string): Promise<{ success: boolean; data: ParentTeacherMeeting[] }> {
-    const response = await api.get('/teacher/meetings', { params: { status } });
+  async getMeetings(params?: string | { status?: string; studentId?: string; format?: string }): Promise<{ success: boolean; data: ParentTeacherMeeting[] }> {
+    const query = typeof params === 'string'
+      ? { status: params }
+      : params;
+    const response = await api.get('/teacher/meetings', { params: query });
     return response.data;
   },
 
@@ -567,49 +615,61 @@ export const meetingsAPI = {
     duration: number;
     mode: 'in_person' | 'video' | 'phone';
     agenda?: string;
+    meetingLink?: string;
+    meetingLocation?: string;
+    parentName?: string;
+    parentEmail?: string;
+    parentPhone?: string;
   }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
     const response = await api.post('/teacher/meetings', data);
     return response.data;
   },
 
-  async respondToMeetingRequest(meetingId: string, data: { status: 'confirmed' | 'declined' | 'rescheduled'; newDate?: string }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
+  async respondToMeetingRequest(meetingId: string, data: { status: 'confirmed' | 'declined' | 'rescheduled' | 'cancelled'; newDate?: string }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
     const response = await api.put(`/teacher/meetings/${meetingId}/respond`, data);
     return response.data;
   },
 
-  async updateMeetingNotes(meetingId: string, data: { notes: string }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
-    const response = await api.put(`/teacher/meetings/${meetingId}/notes`, data);
+  async updateMeetingNotes(meetingId: string, data: { notes: string } | string): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
+    const payload = typeof data === 'string' ? { notes: data } : data;
+    const response = await api.put(`/teacher/meetings/${meetingId}/notes`, payload);
     return response.data;
   },
 
-  async cancelMeeting(meetingId: string, reason: string): Promise<{ success: boolean }> {
+  async cancelMeeting(meetingId: string, reason?: string): Promise<{ success: boolean }> {
     const response = await api.delete(`/teacher/meetings/${meetingId}`, { params: { reason } });
     return response.data;
   },
 
-  async sendMeetingNotification(meetingId: string, data: { message?: string }): Promise<{ success: boolean }> {
-    const response = await api.post(`/teacher/meetings/${meetingId}/notify`);
+  async sendMeetingNotification(meetingId: string, data?: { message?: string }): Promise<{ success: boolean }> {
+    const response = await api.post(`/teacher/meetings/${meetingId}/notify`, data);
     return response.data;
   },
 
-  async completeMeeting(meetingId: string, data: { notes: string; feedback?: string }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
-    const response = await api.post(`/teacher/meetings/${meetingId}/complete`, data);
+  async completeMeeting(meetingId: string, data: { notes: string; feedback?: string } | string): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
+    const payload = typeof data === 'string' ? { notes: data } : data;
+    const response = await api.post(`/teacher/meetings/${meetingId}/complete`, payload);
     return response.data;
   },
 
-  async addMeetingNotes(meetingId: string, data: { notes: string }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
-    const response = await api.post(`/teacher/meetings/${meetingId}/notes`);
+  async addMeetingNotes(meetingId: string, data: { notes: string } | string): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
+    const payload = typeof data === 'string' ? { notes: data } : data;
+    const response = await api.post(`/teacher/meetings/${meetingId}/notes`, payload);
     return response.data;
   },
 
-  async addMeetingFeedback(meetingId: string, data: { feedback: string; rating?: number }): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
-    const response = await api.post(`/teacher/meetings/${meetingId}/feedback`, data);
+  async addMeetingFeedback(meetingId: string, data: { feedback: string; rating?: number } | string): Promise<{ success: boolean; data: ParentTeacherMeeting }> {
+    const payload = typeof data === 'string' ? { feedback: data } : data;
+    const response = await api.post(`/teacher/meetings/${meetingId}/feedback`, payload);
     return response.data;
   },
 
-  async exportMeetings(format: 'pdf' | 'excel'): Promise<{ success: boolean; data: { url: string } }> {
-    const response = await api.get('/teacher/meetings/export', { params: { format } });
-    return response.data;
+  async exportMeetings(formatOrParams: 'pdf' | 'excel' | { status?: string; format?: 'pdf' | 'excel' }): Promise<{ success: boolean; data: Blob | { url: string } }> {
+    const params = typeof formatOrParams === 'string'
+      ? { format: formatOrParams }
+      : formatOrParams;
+    const response = await api.get('/teacher/meetings/export', { params, responseType: 'blob' });
+    return { success: true, data: response.data };
   },
 
   async sendMeetingReminder(meetingId: string): Promise<{ success: boolean }> {
@@ -622,8 +682,9 @@ export const meetingsAPI = {
 // TIMETABLE API
 // ============================================
 export const timetableAPI = {
-  async getMyTimetable(week?: number, year?: number): Promise<{ success: boolean; data: TeacherTimetable }> {
-    const response = await api.get('/teacher/timetable', { params: { week, year } });
+  async getMyTimetable(weekOrParams?: number | { weekOffset?: number; week?: number; year?: number }): Promise<{ success: boolean; data: TeacherTimetable }> {
+    const params = typeof weekOrParams === 'object' ? weekOrParams : { week: weekOrParams };
+    const response = await api.get('/teacher/timetable', { params });
     return response.data;
   },
 
@@ -652,13 +713,16 @@ export const timetableAPI = {
     period: number;
     classId: string;
     reason: string;
+    slotId?: string;
+    requesterSlotId?: string;
   }): Promise<{ success: boolean; data: any }> {
     const response = await api.post('/teacher/timetable/substitution', data);
     return response.data;
   },
 
   async requestSwap(data: {
-    slotId: string;
+    slotId?: string;
+    requesterSlotId?: string;
     targetSlotId: string;
     reason: string;
     date: string;
@@ -689,8 +753,9 @@ export const timetableAPI = {
     return response.data;
   },
 
-  async exportTimetable(format: 'pdf' | 'excel' | 'ical'): Promise<{ success: boolean; data: { url: string } }> {
-    const response = await api.get('/teacher/timetable/export', { params: { format } });
+  async exportTimetable(formatOrParams: 'pdf' | 'excel' | 'ical' | { format?: 'pdf' | 'excel' | 'ical'; weekOffset?: number }): Promise<{ success: boolean; data: { url: string } }> {
+    const params = typeof formatOrParams === 'string' ? { format: formatOrParams } : formatOrParams;
+    const response = await api.get('/teacher/timetable/export', { params });
     return response.data;
   },
 };
@@ -721,7 +786,12 @@ export const workspaceAPI = {
     return response.data;
   },
 
-  async create(data: {
+  async delete(recordId: string): Promise<{ success: boolean }> {
+    const response = await api.delete(`/teacher/workspaces/records/${recordId}`);
+    return response.data;
+  },
+
+  async create(data: FormData | {
     section: string;
     item: string;
     title: string;
@@ -729,6 +799,10 @@ export const workspaceAPI = {
     payload?: Record<string, unknown>;
     status?: string;
   }): Promise<{ success: boolean; data: any }> {
+    if (data instanceof FormData) {
+      const response = await api.post('/teacher/workspaces/records', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return response.data;
+    }
     const response = await api.post('/teacher/workspaces/records', data);
     return response.data;
   },
@@ -738,18 +812,40 @@ export const workspaceAPI = {
     return response.data;
   },
 
-  async delete(recordId: string): Promise<{ success: boolean }> {
-    const response = await api.delete(`/teacher/workspaces/records/${recordId}`);
+  getTemplates: async (section?: string) => api.get('/teacher/workspaces/templates', { params: { section } }).then((res) => res.data),
+  getComments: async (recordId: string) => api.get(`/teacher/workspaces/records/${recordId}/comments`).then((res) => res.data),
+  addComment: async (recordId: string, data: Record<string, unknown>) => api.post(`/teacher/workspaces/records/${recordId}/comments`, data).then((res) => res.data),
+  toggleStar: async (recordId: string) => api.post(`/teacher/workspaces/records/${recordId}/star`).then((res) => res.data),
+  publish: async (recordId: string) => api.post(`/teacher/workspaces/records/${recordId}/publish`).then((res) => res.data),
+  archive: async (recordId: string) => api.post(`/teacher/workspaces/records/${recordId}/archive`).then((res) => res.data),
+  share: async (recordId: string, data?: Record<string, unknown>) => api.post(`/teacher/workspaces/records/${recordId}/share`, data ?? {}).then((res) => res.data),
+  export: async (
+    recordIdOrParams: string | { section: string; item: string; format?: string },
+    format?: string
+  ): Promise<Blob | { url: string }> => {
+    if (typeof recordIdOrParams === 'object') {
+      const response = await api.get('/teacher/workspaces/export', {
+        params: recordIdOrParams,
+        responseType: 'blob',
+      });
+      return response.data;
+    }
+    const response = await api.get(`/teacher/workspaces/records/${recordIdOrParams}/export`, {
+      params: { format },
+      responseType: 'blob',
+    });
     return response.data;
   },
+  incrementViews: async (recordId: string) => api.post(`/teacher/workspaces/records/${recordId}/view`).then((res) => res.data),
 };
 
 // ============================================
 // NOTIFICATIONS API
 // ============================================
 export const notificationsAPI = {
-  async getNotifications(unreadOnly?: boolean): Promise<{ success: boolean; data: TeacherNotification[] }> {
-    const response = await api.get('/teacher/notifications', { params: { unreadOnly } });
+  async getNotifications(filtersOrUnreadOnly?: boolean | Record<string, unknown>): Promise<{ success: boolean; data: TeacherNotification[] }> {
+    const params = typeof filtersOrUnreadOnly === 'object' ? filtersOrUnreadOnly : { unreadOnly: filtersOrUnreadOnly };
+    const response = await api.get('/teacher/notifications', { params });
     return response.data;
   },
 
@@ -771,6 +867,16 @@ export const notificationsAPI = {
   async updateNotificationPreferences(data: any): Promise<{ success: boolean; data: any }> {
     const response = await api.put('/teacher/notifications/preferences', data);
     return response.data;
+  },
+
+  toggleStar: async (notificationId: string, starred?: boolean) => api.post(`/teacher/notifications/${notificationId}/star`, { starred }).then((res) => res.data),
+  archiveNotification: async (notificationId: string, archived?: boolean) => api.post(`/teacher/notifications/${notificationId}/archive`, { archived }).then((res) => res.data),
+  deleteNotification: async (notificationId: string) => api.delete(`/teacher/notifications/${notificationId}`).then((res) => res.data),
+  clearAll: async () => api.delete('/teacher/notifications').then((res) => res.data),
+  updatePreferences: async (data: any) => notificationsAPI.updateNotificationPreferences(data),
+  exportNotifications: async (filters?: Record<string, unknown>): Promise<{ success: boolean; data: Blob | { url: string } }> => {
+    const response = await api.get('/teacher/notifications/export', { params: filters, responseType: 'blob' });
+    return { success: true, data: response.data };
   },
 };
 
@@ -809,7 +915,7 @@ export const reportsAPI = {
     return response.data;
   },
 
-  async saveReport(data: { reportId: string; name: string; description?: string }): Promise<{ success: boolean; data: any }> {
+  async saveReport(data: { reportId: string; name: string; description?: string; filters?: Record<string, unknown> }): Promise<{ success: boolean; data: any }> {
     const response = await api.post('/teacher/reports/save', data);
     return response.data;
   },
@@ -824,8 +930,14 @@ export const reportsAPI = {
     return response.data;
   },
 
-  async emailReport(reportId: string, data: { recipients: string[]; subject?: string; message?: string }): Promise<{ success: boolean }> {
-    const response = await api.post(`/teacher/reports/${reportId}/email`, data);
+  async emailReport(reportId: string, data: string | { recipients: string[]; subject?: string; message?: string }): Promise<{ success: boolean }> {
+    const payload = typeof data === 'string' ? { recipients: [data] } : data;
+    const response = await api.post(`/teacher/reports/${reportId}/email`, payload);
+    return response.data;
+  },
+
+  generateReport: async (type: string, params?: Record<string, unknown>) => {
+    const response = await api.post('/teacher/reports/generate', { type, ...params });
     return response.data;
   },
 };
@@ -977,6 +1089,19 @@ export const developmentAPI = {
   },
 };
 
+export const supportAPI = {
+  getTickets: async () => teacherSafe(() => api.get('/teacher/support/tickets').then((res) => res.data), []),
+  getTicket: async (ticketId: string) => teacherSafe(() => api.get(`/teacher/support/tickets/${ticketId}`).then((res) => res.data), null),
+  createTicket: async (data: Record<string, unknown>) => teacherSafe(() => api.post('/teacher/support/tickets', data).then((res) => res.data), { id: Date.now().toString(), ...data }),
+  updateTicket: async (ticketId: string, data: Record<string, unknown>) => teacherSafe(() => api.put(`/teacher/support/tickets/${ticketId}`, data).then((res) => res.data), { id: ticketId, ...data }),
+  replyToTicket: async (ticketId: string, message: string) => teacherSafe(() => api.post(`/teacher/support/tickets/${ticketId}/reply`, { message }).then((res) => res.data), { ticketId, message }),
+  closeTicket: async (ticketId: string) => teacherSafe(() => api.post(`/teacher/support/tickets/${ticketId}/close`).then((res) => res.data), { ticketId }),
+  reopenTicket: async (ticketId: string) => teacherSafe(() => api.post(`/teacher/support/tickets/${ticketId}/reopen`).then((res) => res.data), { ticketId }),
+  getCategories: async () => teacherSafe(() => api.get('/teacher/support/categories').then((res) => res.data), []),
+  getFaqs: async () => teacherSafe(() => api.get('/teacher/support/faqs').then((res) => res.data), []),
+  rateTicket: async (ticketId: string, rating: number, feedback?: string) => teacherSafe(() => api.post(`/teacher/support/tickets/${ticketId}/rate`, { rating, feedback }).then((res) => res.data), { ticketId, rating }),
+};
+
 // ============================================
 // MAIN SERVICE EXPORT
 // ============================================
@@ -1035,10 +1160,12 @@ export const teacherService = {
   resources: resourcesAPI,
   cocurricular: cocurricularAPI,
   development: developmentAPI,
+  support: supportAPI,
   profile: profileAPI,
   getAssignments: homeworkAPI.getHomework,
   createAssignment: homeworkAPI.createHomework,
   gradeSubmission: homeworkAPI.gradeSubmission,
+  publishResults: gradesAPI.publishResults,
   // Profile view helpers
   async incrementProfileView(id: string): Promise<{ profileViews: number } | null> {
     const currentUserId = useAuthStore.getState().user?.id;

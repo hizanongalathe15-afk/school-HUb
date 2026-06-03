@@ -50,5 +50,5 @@ export type {
   BoardingInfo,
   TransportRoute,
   SupportTicket,
-  ParentProfile
+  ParentProfile as ParentProfileType
 } from '../../../types/parent';

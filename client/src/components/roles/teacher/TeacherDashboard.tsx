@@ -1,10 +1,12 @@
 // client/src/components/roles/teacher/TeacherDashboard.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import TeacherSidebar from './TeacherSidebar';
 import TeacherDashboardHome from './TeacherDashboardHome';
 import { Spinner } from '../../ui/Spinner';
+import './teacher.css';
 
 /**
  * TeacherDashboard
@@ -14,6 +16,7 @@ export default function TeacherDashboard() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Redirect to dashboard home if at root teacher path
@@ -23,6 +26,10 @@ export default function TeacherDashboard() {
       navigate('/teacher/dashboard');
     }
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   if (isLoading) {
     return (
@@ -49,14 +56,40 @@ export default function TeacherDashboard() {
                           location.pathname === '/teacher/';
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      {/* Sidebar Navigation */}
-      <TeacherSidebar />
+    <div className="teacher-portal-layout flex min-h-screen bg-slate-50">
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="teacher-portal-overlay"
+          aria-label="Close navigation menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 ml-72 overflow-auto">
-        {isMainDashboard ? <TeacherDashboardHome /> : <Outlet />}
-      </main>
+      <TeacherSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="teacher-portal-main flex min-h-screen min-w-0 flex-1 flex-col">
+        <header className="teacher-portal-topbar">
+          <button
+            type="button"
+            className="teacher-portal-menu-btn"
+            aria-label="Open navigation menu"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
+          <div>
+            <p className="teacher-portal-topbar__eyebrow">Teacher Portal</p>
+            <h1 className="teacher-portal-topbar__title">
+              {isMainDashboard ? 'Dashboard' : 'Workspace'}
+            </h1>
+          </div>
+        </header>
+
+        <main className="teacher-portal-content flex-1 overflow-auto">
+          {isMainDashboard ? <TeacherDashboardHome /> : <Outlet />}
+        </main>
+      </div>
     </div>
   );
 }

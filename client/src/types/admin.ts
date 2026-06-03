@@ -316,6 +316,10 @@ export interface MaintenanceLog {
   completedAt?: string;
   cost?: number;
   notes?: string;
+  date?: string;
+  description?: string;
+  performedBy?: string;
+  nextDue?: string;
 }
 
 export interface Asset {
@@ -641,10 +645,16 @@ export interface TimetableEntry {
   // Additional UI properties
   id?: string;
   classId?: string;
+  className?: string;
   subjectName?: string;
   teacherName?: string;
   location?: string;
   room?: string;
+  notes?: string;
+  isRecurring?: boolean;
+  recurringPattern?: string;
+  color?: string;
+  isActive?: boolean;
 }
 
 // ============================================
@@ -847,6 +857,8 @@ export interface SystemSettings {
   mpesa: MPESASEttings;
   backup: BackupSettings;
   notifications: NotificationSettings;
+  integrations?: Record<string, unknown>;
+  authentication?: Record<string, unknown>;
 }
 
 export interface GeneralSettings {
@@ -858,6 +870,12 @@ export interface GeneralSettings {
   language: string;
   maintenanceMode: boolean;
   maintenanceMessage?: string;
+  environment?: string;
+  timeFormat?: string;
+  currencyPosition?: string;
+  weekStartDay?: string;
+  numberFormat?: string;
+  [key: string]: unknown;
 }
 
 export interface SecuritySettings {
@@ -869,6 +887,12 @@ export interface SecuritySettings {
   lockoutDuration: number;
   require2FA: boolean;
   allowedIPs?: string[];
+  passwordExpiryDays?: number;
+  preventPasswordReuse?: boolean;
+  maxSessionsPerUser?: number;
+  requireUppercase?: boolean;
+  requireLowercase?: boolean;
+  [key: string]: unknown;
 }
 
 export interface EmailSettings {
@@ -880,6 +904,9 @@ export interface EmailSettings {
   fromEmail: string;
   fromName: string;
   apiKey?: string;
+  encryption?: string;
+  domain?: string;
+  [key: string]: unknown;
 }
 
 export interface SMSSettings {
@@ -887,6 +914,8 @@ export interface SMSSettings {
   apiKey?: string;
   apiSecret?: string;
   senderId: string;
+  username?: string;
+  [key: string]: unknown;
 }
 
 export interface MPESASEttings {
@@ -896,6 +925,9 @@ export interface MPESASEttings {
   shortcode: string;
   environment: 'sandbox' | 'production';
   callbackUrl: string;
+  timeoutUrl?: string;
+  resultUrl?: string;
+  [key: string]: unknown;
 }
 
 export interface BackupSettings {
@@ -906,6 +938,8 @@ export interface BackupSettings {
   storageLocation: 'local' | 'cloud';
   lastBackup?: string;
   nextBackup?: string;
+  backupLocation?: string;
+  [key: string]: unknown;
 }
 
 export interface NotificationSettings {
@@ -917,6 +951,8 @@ export interface NotificationSettings {
   notifyOnDisciplineIssue: boolean;
   notifyOnLowInventory: boolean;
   notifyOnSystemError: boolean;
+  digestFrequency?: string;
+  [key: string]: unknown;
 }
 
 // Import User type from user.ts

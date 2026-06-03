@@ -18,6 +18,21 @@ import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import EditableSelect from '../../ui/EditableSelect';
+import type {
+  AttendanceSummary,
+  DisciplineSummary,
+} from '../../../types/teacher';
+
+type StudentAttendanceSummary = AttendanceSummary & {
+  excusedAbsences: number;
+  monthlyAttendance: MonthlyAttendance[];
+};
+
+type StudentDisciplineSummary = DisciplineSummary & {
+  detentions: number;
+  suspensions: number;
+  recentIncidents: DisciplineIncident[];
+};
 
 interface TeacherStudent {
   id: string;
@@ -50,10 +65,10 @@ interface TeacherStudent {
   specialNeeds: string[];
   learningDifficulties: string[];
   iep: IEP | null;
-  attendanceSummary: AttendanceSummary;
-  disciplineSummary: DisciplineSummary;
-  academicHistory: AcademicRecord[];
-  currentGrades: GradeSummary[];
+  attendanceSummary: StudentAttendanceSummary;
+  disciplineSummary: StudentDisciplineSummary;
+  academicHistory: TermAcademicRecord[];
+  currentGrades: StudentGradeSummary[];
   behaviorNotes: BehaviorNote[];
   teacherNotes: TeacherNote[];
   parentContacts: ParentContact[];
@@ -107,31 +122,11 @@ interface IEPGoal {
   status: 'not_started' | 'in_progress' | 'achieved' | 'discontinued';
 }
 
-interface AttendanceSummary {
-  totalDays: number;
-  presentDays: number;
-  absentDays: number;
-  lateDays: number;
-  excusedAbsences: number;
-  percentage: number;
-  monthlyAttendance: MonthlyAttendance[];
-}
-
 interface MonthlyAttendance {
   month: string;
   present: number;
   absent: number;
   late: number;
-}
-
-interface DisciplineSummary {
-  merits: number;
-  demerits: number;
-  streaks: number;
-  warnings: number;
-  detentions: number;
-  suspensions: number;
-  recentIncidents: DisciplineIncident[];
 }
 
 interface DisciplineIncident {
@@ -144,7 +139,7 @@ interface DisciplineIncident {
   resolved: boolean;
 }
 
-interface AcademicRecord {
+interface TermAcademicRecord {
   termId: string;
   termName: string;
   year: string;
@@ -169,7 +164,7 @@ interface SubjectGrade {
   remarks: string;
 }
 
-interface GradeSummary {
+interface StudentGradeSummary {
   subjectId: string;
   subjectName: string;
   currentScore: number;
@@ -1088,7 +1083,7 @@ const TeacherStudentsPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

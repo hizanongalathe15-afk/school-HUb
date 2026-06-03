@@ -74,11 +74,11 @@ export function getErrorMessage(error: unknown) {
 }
 
 export function notifySuccess(message: string) {
-  toast.success(message);
+  toast.success(message, { id: `success:${message}` });
 }
 
 export function notifyError(error: unknown, fallback = 'Unable to complete the action.') {
   const message = getErrorMessage(error) || fallback;
-  toast.error(message);
+  toast.error(message, { id: `error:${message}` });
   return message;
 }

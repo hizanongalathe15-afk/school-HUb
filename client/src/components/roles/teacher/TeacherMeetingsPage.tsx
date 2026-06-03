@@ -5,9 +5,10 @@ import {
   MessageSquare, Users, BookOpen, AlertCircle, CheckCircle,
   XCircle, Clock as ClockIcon, Video as VideoIcon, PhoneCall,
   Map, ExternalLink, Copy, Repeat, Calendar as CalendarIcon,
-  Send, Bell, Star, Award, TrendingUp, BarChart3
+  Send, Bell, Star, Award, TrendingUp, BarChart3, Eye
 } from 'lucide-react';
 import { teacherService } from '../../../services/teacherService';
+import type { ParentTeacherMeeting, TeacherStudent } from '../../../types/teacher';
 import { Modal } from '../../ui/Modal';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
@@ -15,49 +16,8 @@ import { Spinner } from '../../ui/Spinner';
 import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 import { clsx } from 'clsx';
-
-interface ParentTeacherMeeting {
-  id: string;
-  parentId: string;
-  parentName: string;
-  parentEmail: string;
-  parentPhone: string;
-  studentId: string;
-  studentName: string;
-  studentAdmissionNumber: string;
-  studentClassName: string;
-  teacherId: string;
-  teacherName: string;
-  scheduledDate: string;
-  duration: number;
-  mode: 'in_person' | 'video' | 'phone';
-  status: 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
-  agenda: string;
-  notes: string | null;
-  meetingLink: string | null;
-  meetingLocation: string | null;
-  recordingUrl: string | null;
-  feedbackProvided: boolean;
-  feedback: string | null;
-  createdAt: string;
-  updatedAt: string;
-  confirmedAt: string | null;
-  completedAt: string | null;
-  rescheduledFromId: string | null;
-}
-
-interface TeacherStudent {
-  id: string;
-  name: string;
-  admissionNumber: string;
-  className: string;
-  classId: string;
-  parentId: string;
-  parentName: string;
-  parentEmail: string;
-  parentPhone: string;
-}
 
 interface MeetingStats {
   total: number;
@@ -329,13 +289,10 @@ const TeacherMeetingsPage: React.FC = () => {
         status: filterStatus === 'all' ? undefined : filterStatus,
         format,
       });
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `meetings_${new Date().toISOString().split('T')[0]}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(
+        response.data,
+        `meetings_${new Date().toISOString().split('T')[0]}.${format}`
+      );
       toast.success(`Exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);
@@ -983,7 +940,7 @@ const TeacherMeetingsPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

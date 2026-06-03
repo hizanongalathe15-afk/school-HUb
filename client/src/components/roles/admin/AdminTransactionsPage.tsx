@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Clock, Eye, Printer, Mail, MessageCircle,
   TrendingUp, TrendingDown, AlertCircle, Shield, UserCheck,
   Receipt, FileText, Copy, Share2, BarChart3, PieChart,
-  ArrowUpDown, Wallet, Building2, Landmark, QrCode
+  ArrowUpDown, Wallet, Building2, Landmark, QrCode, Plus, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { financeService, mpesaService } from '../../../services/adminService';

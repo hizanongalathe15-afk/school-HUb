@@ -1,8 +1,33 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { auth, roleCheck } from '../middleware/auth.js';
 import { storeKeeperController } from '../controllers/storeKeeperController.js';
 
 const router = Router();
+const inventoryUploadDir = path.resolve(process.cwd(), 'server/uploads/inventory');
+
+fs.mkdirSync(inventoryUploadDir, { recursive: true });
+
+const inventoryUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, inventoryUploadDir),
+    filename: (_req, file, cb) => {
+      const safeBase = path
+        .basename(file.originalname, path.extname(file.originalname))
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase() || 'inventory';
+      cb(null, `${Date.now()}-${safeBase}${path.extname(file.originalname).toLowerCase()}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = file.mimetype.startsWith('image/');
+    cb(allowed ? null : new Error('Unsupported image type'), allowed);
+  },
+});
 
 router.use(auth);
 router.use(roleCheck(['STORE_KEEPER', 'ADMIN', 'PRINCIPAL']));
@@ -14,6 +39,10 @@ router.get('/dashboard/stats', storeKeeperController.getDashboard);
 // Inventory
 router.get('/inventory', storeKeeperController.getInventory);
 router.post('/inventory/bulk-import', storeKeeperController.addItem);
+router.get('/inventory/low-stock', storeKeeperController.getLowStockItems);
+router.get('/inventory/expiry-summary', storeKeeperController.getExpirySummary);
+router.post('/inventory/expiry-report', storeKeeperController.generateReport);
+router.post('/inventory/:itemId/image', inventoryUpload.single('image'), storeKeeperController.uploadItemImage);
 router.get('/inventory/:itemId', storeKeeperController.getItem);
 router.post('/inventory', storeKeeperController.addItem);
 router.put('/inventory/:itemId', storeKeeperController.updateItem);
@@ -105,7 +134,6 @@ router.put('/locations/:locationId', storeKeeperController.updateLocation);
 router.delete('/locations/:locationId', storeKeeperController.deleteLocation);
 
 // Summary endpoints
-router.get('/inventory/expiry-summary', storeKeeperController.getExpirySummary);
 router.get('/locations/summary', storeKeeperController.getLocationSummary);
 router.get('/movements/summary', storeKeeperController.getMovementSummary);
 router.get('/deliveries/summary', storeKeeperController.getDeliverySummary);

@@ -128,6 +128,14 @@ router.delete('/media/albums/:albumId', adminController.deleteAlbum);
 router.post('/media/batch-upload', adminController.batchUpload);
 
 // ============================================
+// COMMUNICATION MANAGEMENT
+// ============================================
+router.get('/communication/announcements', adminController.getAnnouncements);
+router.post('/communication/announcements', mediaUpload.array('media', 20), adminController.createAnnouncement);
+router.put('/communication/announcements/:announcementId', mediaUpload.array('media', 20), adminController.updateAnnouncement);
+router.delete('/communication/announcements/:announcementId', adminController.deleteAnnouncement);
+
+// ============================================
 // USER MANAGEMENT
 // ============================================
 router.get('/users', adminController.getAllUsers);
@@ -241,7 +249,15 @@ router.post('/reports/generate/:configId', adminController.generateReport);
 router.get('/reports/academic', adminController.generateAcademicReport);
 router.get('/reports/attendance', adminController.generateAttendanceReport);
 router.get('/reports/discipline', adminController.generateDisciplineReport);
+router.get('/reports/kcse/:year/summary', adminController.getKcseExamSummary);
+router.get('/reports/kcse/:year/export', adminController.exportKcseExamResults);
 router.get('/reports/kcse/:year', adminController.generateKCSEAnalysis);
+
+// Attendance Management
+router.get('/attendance/date/:date', adminController.getAttendanceByDate);
+router.post('/attendance/bulk-mark', adminController.bulkMarkAttendance);
+router.get('/attendance/export/:date', adminController.exportAttendanceByDate);
+router.post('/attendance/import/:date', academicUpload.single('file'), adminController.importAttendanceByDate);
 
 // ============================================
 // SYSTEM SETTINGS
@@ -258,7 +274,16 @@ router.patch('/settings/notifications', adminController.updateNotificationSettin
 // Backup & Restore
 router.post('/settings/backup/create', adminController.createBackup);
 router.post('/settings/backup/restore', adminController.restoreBackup);
+router.post('/settings/backup/restore-file', academicUpload.single('file'), adminController.importAttendanceByDate);
 router.get('/settings/backup/list', adminController.listBackups);
+router.get('/settings/backups', adminController.listBackups);
+router.get('/settings/health', adminController.getBackupSystemHealth);
+router.get('/settings/backup/schedule', adminController.getBackupSchedule);
+router.put('/settings/backup/schedule', adminController.saveBackupSchedule);
+router.get('/settings/backup/cloud', adminController.getCloudConfig);
+router.put('/settings/backup/cloud', adminController.saveCloudConfig);
+router.post('/settings/backup/sync-cloud', adminController.syncBackupsToCloud);
+router.get('/settings/backup/:backupId/download', adminController.downloadBackup);
 router.delete('/settings/backup/:backupId', adminController.deleteBackup);
 
 // System Operations

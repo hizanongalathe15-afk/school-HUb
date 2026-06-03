@@ -300,7 +300,7 @@ export interface Budget {
   totalSpent: number;
   remaining: number;
   utilizationPercentage: number;
-  status: 'draft' | 'approved' | 'active' | 'closed';
+  status: 'draft' | 'approved' | 'active' | 'closed' | 'CLOSED';
   createdBy: string;
   approvedBy?: string;
   approvedAt?: string;
@@ -408,6 +408,8 @@ export interface Invoice {
   studentId?: string;
   studentName?: string;
   admissionNumber?: string;
+  amount?: number;
+  description?: string;
   items: InvoiceItem[];
   subtotal: number;
   tax?: number;
@@ -429,7 +431,7 @@ export interface InvoiceItem {
   description: string;
   quantity: number;
   unitPrice: number;
-  amount: number;
+  amount?: number;
   feeComponentId?: string;
   academicYear?: string;
   term?: string;
@@ -463,15 +465,41 @@ export interface MPesaTransaction {
 export interface BankAccount {
   id: string;
   name: string;
+  accountName?: string;
   bankName: string;
   accountNumber: string;
   branchCode?: string;
   currency: string;
   currentBalance: number;
+  openingBalance?: number;
   lastReconciledDate?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BankAccountForm {
+  accountName: string;
+  bankName: string;
+  accountNumber: string;
+  currency: string;
+  openingBalance: number;
+  isActive: boolean;
+}
+
+export interface BankReconciliation {
+  statementBalance: number;
+  schoolBalance: number;
+  difference: number;
+  unmatchedTransactions?: Array<{
+    id: string;
+    date: string;
+    description: string;
+    amount: number;
+    reference?: string;
+    type?: 'credit' | 'debit';
+  }>;
+  lastReconciledAt?: string;
 }
 
 export interface BankStatement {
@@ -552,11 +580,13 @@ export interface PettyCash {
 export interface PettyCashTransaction {
   id: string;
   pettyCashId: string;
-  type: 'disbursement' | 'replenishment';
+  type: 'disbursement' | 'replenishment' | 'expense' | 'income';
   amount: number;
   description: string;
   category: string;
   receiptNumber?: string;
+  reference?: string;
+  date?: string;
   attachment?: string;
   processedBy: string;
   processedByName: string;
@@ -573,6 +603,8 @@ export interface FixedAsset {
   name: string;
   description?: string;
   category: string;
+  assetType?: string;
+  department?: string;
   purchaseDate: string;
   purchaseCost: number;
   supplier?: string;
@@ -590,6 +622,44 @@ export interface FixedAsset {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface FixedAssetForm {
+  name: string;
+  description?: string;
+  assetType: string;
+  purchaseDate: string;
+  purchaseCost: number;
+  salvageValue: number;
+  usefulLife: number;
+  department?: string;
+  location?: string;
+  status: 'active' | 'disposed' | 'lost' | 'maintenance';
+}
+
+export interface DepreciationRecord {
+  id: string;
+  assetId?: string;
+  year: number;
+  method: string;
+  beginningValue: number;
+  depreciationExpense: number;
+  endingValue: number;
+}
+
+export interface AssetMaintenanceRecord {
+  id: string;
+  assetId?: string;
+  type: 'preventive' | 'repair' | 'upgrade' | 'inspection' | 'replacement';
+  description?: string;
+  date: string;
+  cost?: number;
+  performedBy?: string;
+  notes?: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+}
+
+/** @deprecated Use AssetMaintenanceRecord — kept for bursar fixed-assets page imports */
+export type MaintenanceRecord = AssetMaintenanceRecord;
 
 // ============================================
 // DASHBOARD TYPES
@@ -761,4 +831,190 @@ export interface Sponsor {
   organization?: string;
   totalDonation?: number;
   activeScholarships?: number;
+}
+
+// ============================================
+// BURSAR SETTINGS & ANALYTICS TYPES
+// ============================================
+export interface Settings {
+  officeName?: string;
+  fiscalYearStart?: string;
+  defaultCurrency?: string;
+  bankChargesAccount?: string;
+  enableMultiUserApproval?: boolean;
+  approvalThreshold?: number;
+  [key: string]: unknown;
+}
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface NotificationPreferences {
+  feeReminders?: boolean;
+  paymentAlerts?: boolean;
+  budgetAlerts?: boolean;
+  expenseAlerts?: boolean;
+  salaryAlerts?: boolean;
+  reconciliationAlerts?: boolean;
+  [key: string]: boolean | undefined;
+}
+
+export interface FinancialOverview {
+  totalRevenue: number;
+  totalExpenses: number;
+  netIncome: number;
+  revenueGrowth: number;
+  expenseGrowth: number;
+  netIncomeMargin: number;
+}
+
+export interface RevenueTrend {
+  period: string;
+  amount: number;
+}
+
+export interface ExpenseBreakdown {
+  category: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface CashFlowStatement {
+  operatingCashFlow: number;
+  investingCashFlow: number;
+  financingCashFlow: number;
+  netCashFlow: number;
+}
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  description: string;
+  status: 'success' | 'failed' | 'pending';
+  performedBy?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  timestamp: string;
+  changes?: Record<string, unknown>;
+}
+
+export interface AuditFilter {
+  startDate: string;
+  endDate: string;
+  userId: string;
+  action: string;
+  entityType: string;
+}
+
+export interface AuditSummary {
+  totalActions: number;
+  uniqueUsers: number;
+  failedActions: number;
+  todayActions: number;
+}
+
+export interface BulkOperation {
+  id: string;
+  operationType: string;
+  description?: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'deleted';
+  startedAt?: string;
+  completedAt?: string;
+  recordsProcessed?: number;
+  parameters?: Record<string, unknown>;
+}
+
+export interface BulkOperationForm {
+  operationType: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface BulkOperationLog {
+  id: string;
+  operationId?: string;
+  timestamp: string;
+  level: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  details?: unknown;
+}
+
+export interface StudentFee {
+  id: string;
+  studentId: string;
+  feeComponentId?: string;
+  description: string;
+  amount: number;
+  paidAmount?: number;
+  balance?: number;
+  dueDate: string;
+  status: 'paid' | 'partial' | 'overdue' | 'pending' | 'waived';
+  term?: string;
+  academicYear?: string;
+}
+
+export interface StudentFeeSummary {
+  studentId: string;
+  studentName?: string;
+  firstName?: string;
+  lastName?: string;
+  admissionNumber?: string;
+  className?: string;
+  stream?: string;
+  totalBilled?: number;
+  totalPaid?: number;
+  totalOutstanding: number;
+  balance?: number;
+  status?: 'paid' | 'partial' | 'arrears' | 'overpaid';
+}
+
+export interface FeeBreakdown {
+  id: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: 'paid' | 'partial' | 'overdue' | 'pending' | 'waived';
+}
+
+export interface PaymentRecord {
+  id: string;
+  amount: number;
+  paymentMethod: string;
+  reference?: string;
+  notes?: string;
+  date: string;
+}
+
+export interface InvoiceForm {
+  studentId?: string;
+  amount: number;
+  description: string;
+  dueDate: string;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
+export interface InvoiceFilter {
+  status: string;
+  startDate: string;
+  endDate: string;
+  search: string;
+}
+
+export interface PettyCashTransactionForm {
+  amount: number;
+  description: string;
+  type: 'expense' | 'income' | 'disbursement' | 'replenishment';
+  date: string;
+  reference?: string;
+  category?: string;
 }

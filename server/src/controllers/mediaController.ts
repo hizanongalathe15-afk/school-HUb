@@ -61,6 +61,40 @@ export const mediaController = {
     }
   },
 
+  uploadGalleryFiles: async (req: Request, res: Response) => {
+    try {
+      const files = ((req as Request & { files?: Express.Multer.File[] }).files || []);
+      if (!files.length) return res.status(400).json({ success: false, message: 'No media files uploaded' });
+
+      const school = await prisma.school.findFirst();
+      if (!school) return res.status(404).json({ success: false, message: 'School not found' });
+
+      const { category = 'general', isPublished = 'true' } = req.body as Record<string, string>;
+      const created = await Promise.all(files.map((file) => {
+        const type = file.mimetype.startsWith('video/') ? 'video' : 'image';
+        const url = `/uploads/media/${file.filename}`;
+        return prisma.gallery.create({
+          data: {
+            schoolId: school.id,
+            title: file.originalname.replace(/\.[^.]+$/, ''),
+            description: '',
+            imageUrl: type === 'image' ? url : '',
+            videoUrl: type === 'video' ? url : null,
+            type,
+            category,
+            uploadedBy: (req as any).user?.userId || 'admin',
+            isPublished: isPublished !== 'false'
+          }
+        });
+      }));
+
+      res.status(201).json({ success: true, data: created, message: `${created.length} media file${created.length === 1 ? '' : 's'} uploaded` });
+    } catch (error) {
+      console.error('Error uploading gallery files:', error);
+      res.status(500).json({ success: false, message: 'Unable to upload media files' });
+    }
+  },
+
   updateGalleryItem: async (req: Request, res: Response) => {
     try {
       const { title, description, imageUrl, videoUrl, type, category, isPublished } = req.body;

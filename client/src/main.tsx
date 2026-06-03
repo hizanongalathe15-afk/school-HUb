@@ -47,5 +47,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
 if (import.meta.env.DEV) {
   unregisterServiceWorker().catch(() => undefined);
 } else {
-  registerServiceWorkerWhenIdle();
+  // Disable service worker for now due to video caching issues
+  unregisterServiceWorker().catch(() => undefined);
+  // registerServiceWorkerWhenIdle();
 }

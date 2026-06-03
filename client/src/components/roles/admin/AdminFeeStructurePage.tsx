@@ -76,8 +76,10 @@ export default function AdminFeeStructurePage() {
 
   // Auto-calculate totals and discounts
   const calculateTotal = useCallback(() => {
-    if (!autoCalculate) return form.amount;
     const amount = form.amount || 0;
+    if (!autoCalculate) {
+      return { amount, discount: 0, late: 0, total: amount };
+    }
     const discount = (amount * (form.discountPercentage || 0)) / 100;
     const late = form.lateFee || 0;
     const afterDiscount = amount - discount;

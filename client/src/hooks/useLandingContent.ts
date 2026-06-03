@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLandingContent } from '../services/schoolService';
 import i18n from '../i18n/i18n';
+import { DEFAULT_LANDING_CONTENT } from '../data/defaultLandingContent';
 import type { LandingContent } from '../types';
 
 /**
@@ -43,11 +44,11 @@ function buildLocalizedContent(): LandingContent {
     live: {
       badgeLabel: t('liveCampusLabel', 'Live Campus'),
       tickerLabel: t('todayLabel', 'Today'),
-      tickerItems: i18n.t('landing.liveCampusItems', { returnObjects: true }),
+      tickerItems: i18n.t('landing.liveCampusItems', { returnObjects: true }) as string[] | undefined,
       aboutHeading: t('aboutHeading', 'A Legacy of Curious Minds'),
       aboutText: t('aboutText', 'We connect academics, communication, admissions, and daily school life in one polished experience for learners, families, and staff.'),
       aboutTag: t('aboutTag', 'Est. 1972'),
-      admissionsSteps: i18n.t('landing.admissionsSteps', { returnObjects: true })
+      admissionsSteps: i18n.t('landing.admissionsSteps', { returnObjects: true }) as { title: string; description: string; }[] | undefined
     },
     navigation: [
       {
@@ -107,13 +108,13 @@ function buildLocalizedContent(): LandingContent {
         href: '/contact'
       }
     ],
-    heroSlides: i18n.t('landing.heroSlides', { returnObjects: true }).map((slide: any) => ({
+    heroSlides: (i18n.t('landing.heroSlides', { returnObjects: true }) as any[]).map((slide: any) => ({
       ...slide,
       image: '/assets/default-images/ivan-aleksic-PDRFeeDniCk-unsplash.jpg',
       video: '/assets/videos/Students_walking_in_hallway_202606010835.mp4',
       accent: slide.accent || 'blue'
     })),
-    stats: i18n.t('landing.stats', { returnObjects: true }),
+    stats: i18n.t('landing.stats', { returnObjects: true }) as { value: string; label: string; }[],
     sections: {
       about: {
         eyebrow: t('sections.aboutEyebrow', 'About School')
@@ -135,13 +136,13 @@ function buildLocalizedContent(): LandingContent {
         eyebrow: t('sections.admissionsEyebrow', 'Admissions')
       }
     },
-    values: i18n.t('landing.values', { returnObjects: true }).map((value: any) => ({
+    values: (i18n.t('landing.values', { returnObjects: true }) as any[]).map((value: any) => ({
       ...value,
       image: '/assets/default-images/kimberly-farmer-lUaaKCUANVI-unsplash.jpg',
       accent: value.accent || 'blue'
     })),
-    programs: i18n.t('landing.programs', { returnObjects: true }),
-    studentLife: i18n.t('landing.studentLife', { returnObjects: true }),
+    programs: i18n.t('landing.programs', { returnObjects: true }) as { name: string; level: string; description: string; }[],
+    studentLife: i18n.t('landing.studentLife', { returnObjects: true }) as string[],
     admissions: {
       enabled: true,
       heading: t('admissions.heading', 'Admissions Open'),
@@ -154,75 +155,80 @@ function buildLocalizedContent(): LandingContent {
       columns: [
         {
           heading: t('footer.schoolHeading', 'School'),
-          links: i18n.t('landing.footer.schoolLinks', { returnObjects: true })
+          links: i18n.t('landing.footer.schoolLinks', { returnObjects: true }) as { label: string; href: string; }[]
         },
         {
           heading: t('footer.materialsHeading', 'Materials and Assignments'),
-          links: i18n.t('landing.footer.materialsLinks', { returnObjects: true })
+          links: i18n.t('landing.footer.materialsLinks', { returnObjects: true }) as { label: string; href: string; }[]
         },
         {
           heading: t('footer.departmentsHeading', 'Departments'),
-          links: i18n.t('landing.footer.departmentLinks', { returnObjects: true })
+          links: i18n.t('landing.footer.departmentLinks', { returnObjects: true }) as { label: string; href: string; }[]
         }
       ],
-      socials: i18n.t('landing.footer.socials', { returnObjects: true }),
+      socials: i18n.t('landing.footer.socials', { returnObjects: true }) as { label: string; href: string; }[],
       bottomText: t('footer.bottomText', 'School Hub Academy. All rights reserved.')
     }
   };
 }
 
+function getLocalLandingContent(): LandingContent {
+  try {
+    return buildLocalizedContent();
+  } catch (error) {
+    console.warn('Using default landing content because localization failed:', error);
+    return DEFAULT_LANDING_CONTENT;
+  }
+}
+
+function applyLocalizedText(apiContent: LandingContent): LandingContent {
+  const localContent = getLocalLandingContent();
+
+  return {
+    ...apiContent,
+    navigation: localContent.navigation,
+    sections: localContent.sections,
+    live: localContent.live,
+    admissions: localContent.admissions,
+    footer: localContent.footer
+  };
+}
+
 export function useLandingContent() {
-  const [content, setContent] = useState<LandingContent | null>(null);
+  const [content, setContent] = useState<LandingContent>(() => getLocalLandingContent());
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize with API data or default, but localized based on current language
   useEffect(() => {
+    let isMounted = true;
+
     getLandingContent()
       .then((apiContent) => {
-        // If API provides content, still localize the navigation and text parts
-        const localizedContent = { ...apiContent };
-        try {
-          const navAndText = buildLocalizedContent();
-          localizedContent.navigation = navAndText.navigation;
-          localizedContent.sections = navAndText.sections;
-          localizedContent.live = navAndText.live;
-          localizedContent.admissions = navAndText.admissions;
-          localizedContent.footer = navAndText.footer;
-        } catch (e) {
-          console.warn('Could not apply localization to API content');
-        }
-        setContent(localizedContent);
+        if (!isMounted) return;
+        setContent(applyLocalizedText(apiContent));
+        setError(null);
       })
       .catch((requestError: Error) => {
-        // Use localized default content instead of hardcoded English
-        setContent(buildLocalizedContent());
+        if (!isMounted) return;
         setError(null);
         console.warn('Using localized landing content because the API is unavailable:', requestError.message);
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Listen for language changes and rebuild the content
   useEffect(() => {
     const handleLanguageChange = () => {
-      // Rebuild landing content with new language
+      setContent((currentContent) => applyLocalizedText(currentContent));
+
       getLandingContent()
         .then((apiContent) => {
-          const localizedContent = { ...apiContent };
-          try {
-            const navAndText = buildLocalizedContent();
-            localizedContent.navigation = navAndText.navigation;
-            localizedContent.sections = navAndText.sections;
-            localizedContent.live = navAndText.live;
-            localizedContent.admissions = navAndText.admissions;
-            localizedContent.footer = navAndText.footer;
-          } catch (e) {
-            console.warn('Could not apply localization to API content');
-          }
-          setContent(localizedContent);
+          setContent(applyLocalizedText(apiContent));
+          setError(null);
         })
         .catch(() => {
-          // Use localized default content
-          setContent(buildLocalizedContent());
+          setError(null);
         });
     };
 

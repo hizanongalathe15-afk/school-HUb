@@ -221,7 +221,7 @@ const BursarPettyCashPage: React.FC = () => {
               ))}
               {transactions.length === 0 && (
                 <tr>
-                  <td colspan="7" className="px-6 py-4 text-center text-amber-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-amber-500">
                     No petty cash transactions found
                   </td>
                 </tr>
@@ -338,7 +338,7 @@ const BursarPettyCashPage: React.FC = () => {
 export default BursarPettyCashPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

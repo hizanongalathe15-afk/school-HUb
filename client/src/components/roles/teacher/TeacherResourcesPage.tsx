@@ -16,6 +16,7 @@ import { Spinner } from '../../ui/Spinner';
 import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 import { clsx } from 'clsx';
 
 interface Resource {
@@ -61,7 +62,7 @@ interface Folder {
   sharedWith: string[];
 }
 
-interface Category {
+interface ResourceCategory {
   id: string;
   name: string;
   icon: string;
@@ -106,7 +107,7 @@ const resourceTypeColors: Record<string, string> = {
 const TeacherResourcesPage: React.FC = () => {
   const [resources, setResources] = useState<Resource[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ResourceCategory[]>([]);
   const [requests, setRequests] = useState<ResourceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -369,13 +370,7 @@ const TeacherResourcesPage: React.FC = () => {
   const downloadResource = async (resource: Resource) => {
     try {
       const response = await teacherService.resources.downloadResource(resource.id);
-      const blob = new Blob([response.data], { type: resource.mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = resource.fileName;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(response.data, resource.fileName, resource.mimeType);
       
       // Update download count locally
       setResources(prev => prev.map(r => 
@@ -1216,7 +1211,7 @@ const TeacherResourcesPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

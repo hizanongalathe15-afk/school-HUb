@@ -306,6 +306,15 @@ export const storeKeeperController = {
     }
   },
 
+  getLowStockItems: async (_req: Request, res: Response) => {
+    try {
+      const items = await prisma.inventoryItem.findMany({ include: { supplierRecord: true } as any });
+      res.json({ success: true, data: items.filter((item) => item.quantity <= item.minThreshold).map(itemPayload) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Unable to load low stock items' });
+    }
+  },
+
   getItem: async (req: Request, res: Response) => {
     try {
       const item = await prisma.inventoryItem.findUnique({
@@ -316,6 +325,27 @@ export const storeKeeperController = {
       res.json({ success: true, data: itemPayload(item) });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Unable to load item' });
+    }
+  },
+
+  uploadItemImage: async (req: Request, res: Response) => {
+    try {
+      const file = (req as Request & { file?: Express.Multer.File }).file;
+      if (!file) return res.status(400).json({ success: false, message: 'No image uploaded' });
+
+      const imageUrl = `/uploads/inventory/${file.filename}`;
+      const itemId = req.params.itemId;
+      if (itemId !== 'temp') {
+        await prisma.inventoryItem.update({
+          where: { id: itemId },
+          data: { imageUrl } as any,
+        });
+      }
+
+      res.status(201).json({ success: true, data: { url: imageUrl, imageUrl } });
+    } catch (error) {
+      console.error('Error uploading item image:', error);
+      res.status(500).json({ success: false, message: 'Unable to upload item image' });
     }
   },
 

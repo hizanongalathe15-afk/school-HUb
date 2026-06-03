@@ -189,8 +189,12 @@ export const studentFeeStateAPI = {
     return response.data;
   },
 
-  waiveFee: async (studentId: string, amount: number, reason: string) => {
-    const response = await api.post(`/bursar/students/${studentId}/waive-fee`, { amount, reason });
+  waiveFee: async (studentId: string, feeIdOrAmount: string | number, reason?: string) => {
+    if (typeof feeIdOrAmount === 'string' && reason === undefined) {
+      const response = await api.post(`/bursar/students/${studentId}/waive-fee`, { feeId: feeIdOrAmount, reason: `Waive fee ${feeIdOrAmount}` });
+      return response.data;
+    }
+    const response = await api.post(`/bursar/students/${studentId}/waive-fee`, { amount: feeIdOrAmount, reason: reason || '' });
     return response.data;
   },
 
@@ -201,6 +205,26 @@ export const studentFeeStateAPI = {
 
   bulkSendArrearsReminders: async (studentIds: string[], message?: string) => {
     const response = await api.post('/bursar/students/arrears/send-reminders', { studentIds, message });
+    return response.data;
+  },
+
+  searchStudents: async (term: string) => {
+    const response = await api.get('/bursar/students/search', { params: { q: term } });
+    return response.data;
+  },
+
+  getFeeBreakdown: async (studentId: string) => {
+    const response = await api.get(`/bursar/students/${studentId}/fee-breakdown`);
+    return response.data;
+  },
+
+  getPaymentHistory: async (studentId: string) => {
+    const response = await api.get(`/bursar/students/${studentId}/payments`);
+    return response.data;
+  },
+
+  recordPayment: async (studentId: string, data: Record<string, unknown>) => {
+    const response = await api.post(`/bursar/students/${studentId}/payments`, data);
     return response.data;
   },
 };
@@ -512,23 +536,26 @@ export const invoiceAPI = {
     return response.data;
   },
 
-  createInvoice: async (invoiceData: Partial<Invoice>) => {
+  createInvoice: async (invoiceData: Partial<Invoice> | Record<string, unknown>) => {
     const response = await api.post('/bursar/invoices', invoiceData);
     return response.data;
   },
 
-  updateInvoice: async (invoiceId: string, invoiceData: Partial<Invoice>) => {
+  updateInvoice: async (invoiceId: string, invoiceData: Partial<Invoice> | Record<string, unknown>) => {
     const response = await api.put(`/bursar/invoices/${invoiceId}`, invoiceData);
     return response.data;
   },
 
-  sendInvoice: async (invoiceId: string, email: string) => {
-    const response = await api.post(`/bursar/invoices/${invoiceId}/send`, { email });
+  sendInvoice: async (invoiceId: string, emailOrChannel?: string) => {
+    const payload = emailOrChannel?.includes('@')
+      ? { email: emailOrChannel }
+      : { channel: emailOrChannel || 'email' };
+    const response = await api.post(`/bursar/invoices/${invoiceId}/send`, payload);
     return response.data;
   },
 
-  cancelInvoice: async (invoiceId: string, reason: string) => {
-    const response = await api.post(`/bursar/invoices/${invoiceId}/cancel`, { reason });
+  cancelInvoice: async (invoiceId: string, reason?: string) => {
+    const response = await api.post(`/bursar/invoices/${invoiceId}/cancel`, { reason: reason || 'Cancelled' });
     return response.data;
   },
 
@@ -622,6 +649,19 @@ export const bankAPI = {
     const response = await api.get(`/bursar/bank-accounts/${accountId}/statements/${statementId}/reconciliation-report`);
     return response.data;
   },
+
+  createBankAccount: async (accountData: Partial<BankAccount>) => {
+    const response = await api.post('/bursar/bank-accounts', accountData);
+    return response.data;
+  },
+  deleteBankAccount: async (accountId: string) => {
+    const response = await api.delete(`/bursar/bank-accounts/${accountId}`);
+    return response.data;
+  },
+  getBankReconciliation: async () => {
+    const response = await api.get('/bursar/bank-accounts/reconciliation');
+    return response.data;
+  },
 };
 
 // ============================================
@@ -706,6 +746,35 @@ export const pettyCashAPI = {
     const response = await api.post('/bursar/petty-cash/reconcile');
     return response.data;
   },
+
+  getTransactions: async () => {
+    const response = await api.get('/bursar/petty-cash/transactions');
+    return response.data;
+  },
+
+  createTransaction: async (data: { amount: number; description: string; type: string; date?: string; reference?: string; category?: string } | object) => {
+    if (data.type === 'income' || data.type === 'replenishment') {
+      const response = await api.post('/bursar/petty-cash/replenish', { amount: data.amount, description: data.description });
+      return response.data;
+    }
+    const response = await api.post('/bursar/petty-cash/disburse', {
+      amount: data.amount,
+      description: data.description,
+      category: data.category || 'general',
+      receiptNumber: data.reference,
+    });
+    return response.data;
+  },
+
+  updateTransaction: async (transactionId: string, data: Record<string, unknown>) => {
+    const response = await api.put(`/bursar/petty-cash/transactions/${transactionId}`, data);
+    return response.data;
+  },
+
+  deleteTransaction: async (transactionId: string) => {
+    const response = await api.delete(`/bursar/petty-cash/transactions/${transactionId}`);
+    return response.data;
+  },
 };
 
 // ============================================
@@ -781,6 +850,31 @@ export const fixedAssetsAPI = {
     const response = await api.get('/bursar/fixed-assets/register');
     return response.data;
   },
+
+  getAssets: async (params?: { status?: string; category?: string }) => {
+    const response = await api.get('/bursar/fixed-assets', { params });
+    return response.data;
+  },
+  createAsset: async (assetData: Partial<FixedAsset>) => {
+    const response = await api.post('/bursar/fixed-assets', assetData);
+    return response.data;
+  },
+  updateAsset: async (assetId: string, assetData: Partial<FixedAsset>) => {
+    const response = await api.put(`/bursar/fixed-assets/${assetId}`, assetData);
+    return response.data;
+  },
+  deleteAsset: async (assetId: string) => {
+    const response = await api.post(`/bursar/fixed-assets/${assetId}/dispose`, { amount: 0, reason: 'Removed' });
+    return response.data;
+  },
+  getAssetDepreciation: async (assetId: string) => {
+    const response = await api.get(`/bursar/fixed-assets/${assetId}/depreciation`);
+    return response.data;
+  },
+  getAssetMaintenance: async (assetId: string) => {
+    const response = await api.get(`/bursar/fixed-assets/${assetId}/maintenance`);
+    return response.data;
+  },
 };
 
 // ============================================
@@ -845,8 +939,11 @@ export const bursarWorkspaceAPI = {
 // ANALYTICS API
 // ============================================
 export const analyticsAPI = {
-  getRevenueTrends: async (params?: { period?: 'daily' | 'weekly' | 'monthly' | 'yearly'; startDate?: string; endDate?: string }) => {
-    const response = await api.get('/bursar/analytics/revenue-trends', { params });
+  getRevenueTrends: async (params?: { period?: 'daily' | 'weekly' | 'monthly' | 'yearly'; startDate?: string; endDate?: string } | string) => {
+    const normalized = typeof params === 'string'
+      ? { period: ({ month: 'monthly', quarter: 'monthly', year: 'yearly' } as const)[params] || 'monthly' }
+      : params;
+    const response = await api.get('/bursar/analytics/revenue-trends', { params: normalized });
     return response.data;
   },
   getExpenseTrends: async (params?: { period?: 'daily' | 'weekly' | 'monthly' | 'yearly'; startDate?: string; endDate?: string }) => {
@@ -909,6 +1006,18 @@ export const analyticsAPI = {
     const response = await api.get('/bursar/analytics/kpis');
     return response.data;
   },
+  getFinancialOverview: async (_dateRange?: string) => {
+    const response = await api.get('/bursar/analytics/kpis');
+    return response.data;
+  },
+  getExpenseBreakdown: async (_dateRange?: string) => {
+    const response = await api.get('/bursar/analytics/expense-distribution');
+    return response.data;
+  },
+  getCashFlowStatement: async (_dateRange?: string) => {
+    const response = await api.get('/bursar/analytics/cash-flow-forecast', { params: { days: 30 } });
+    return response.data;
+  },
 };
 
 // ============================================
@@ -947,9 +1056,27 @@ export const auditAPI = {
     const response = await api.get('/bursar/audit/report', { params, responseType: 'blob' });
     return response.data;
   },
-  exportAuditLog: async (fileFormat: 'excel' | 'pdf', queryParam?: any) => {
-    const auditResponse = await api.get('/bursar/audit/export', { params: queryParam, responseType: 'blob' });
-    return auditResponse.data;
+  exportAuditLog: async (fileFormatOrFilter: 'excel' | 'pdf' | object, queryParam?: any) => {
+    const fileFormat = typeof fileFormatOrFilter === 'string' ? fileFormatOrFilter : 'excel';
+    const params = typeof fileFormatOrFilter === 'string' ? queryParam : fileFormatOrFilter;
+    const auditResponse = await api.get('/bursar/audit/export', { params: { ...params, format: fileFormat }, responseType: 'blob' });
+    return { success: true, data: auditResponse.data, message: 'Audit log exported successfully' };
+  },
+  getAuditLogs: async (filter?: { startDate?: string; endDate?: string; userId?: string; action?: string; entityType?: string }) => {
+    const response = await api.get('/bursar/audit/trail', {
+      params: {
+        startDate: filter?.startDate,
+        endDate: filter?.endDate,
+        userId: filter?.userId,
+        actionType: filter?.action,
+        module: filter?.entityType,
+      },
+    });
+    return response.data;
+  },
+  getAuditSummary: async (filter?: { startDate?: string; endDate?: string }) => {
+    const response = await api.get('/bursar/audit/summary', { params: filter });
+    return response.data;
   },
 };
 
@@ -1181,6 +1308,26 @@ export const bursarSettingsAPI = {
     const response = await api.patch('/bursar/settings/invoice-format', { format });
     return response.data;
   },
+
+  getPaymentMethods: async () => {
+    const response = await api.get('/bursar/settings/payment-methods');
+    return response.data;
+  },
+
+  getNotificationPreferences: async () => {
+    const response = await api.get('/bursar/settings/notification-preferences');
+    return response.data;
+  },
+
+  updatePaymentMethods: async (methods: unknown) => {
+    const response = await api.put('/bursar/settings/payment-methods', methods);
+    return response.data;
+  },
+
+  updateNotificationPreferences: async (preferences: unknown) => {
+    const response = await api.put('/bursar/settings/notification-preferences', preferences);
+    return response.data;
+  },
 };
 
 // Export all APIs as a single object
@@ -1286,6 +1433,26 @@ export const bursarService = {
     },
     archiveOldRecords: async (beforeDate: string) => {
       const response = await api.post('/bursar/bulk/archive', { beforeDate });
+      return response.data;
+    },
+    getBulkOperations: async () => {
+      const response = await api.get('/bursar/bulk/operations');
+      return response.data;
+    },
+    getBulkOperationLogs: async (operationId: string) => {
+      const response = await api.get(`/bursar/bulk/operations/${operationId}/logs`);
+      return response.data;
+    },
+    createBulkOperation: async (data: Record<string, unknown> | object) => {
+      const response = await api.post('/bursar/bulk/operations', data);
+      return response.data;
+    },
+    executeBulkOperation: async (operationId: string) => {
+      const response = await api.post(`/bursar/bulk/operations/${operationId}/execute`);
+      return response.data;
+    },
+    deleteBulkOperation: async (operationId: string) => {
+      const response = await api.delete(`/bursar/bulk/operations/${operationId}`);
       return response.data;
     },
   },

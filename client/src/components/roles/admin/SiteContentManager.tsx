@@ -9,7 +9,8 @@ import {
   PlayCircle as Youtube, Briefcase as Linkedin, ChevronDown, ChevronUp, Copy,
   Eye, RefreshCw, Download, Share2, Link, Bold,
   Italic, AlignLeft, AlignCenter, AlignRight,
-  List, ListOrdered, Code, Maximize2, Minimize2
+  List, ListOrdered, Code, Maximize2, Minimize2,
+  Bell, Info, BookOpen, Users, GraduationCap
 } from 'lucide-react';
 import MediaGalleryManager from './MediaGalleryManager';
 import { footerService, landingContentService, publicPageService } from '../../../services/api';

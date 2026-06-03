@@ -351,7 +351,7 @@ export const infrastructureService = {
     });
   },
 
-  addMaintenanceLog: async (data: Omit<Infrastructure['maintenanceLogs'][0], 'id'>): Promise<Infrastructure['maintenanceLogs'][0]> => {
+  addMaintenanceLog: async (data: Partial<Infrastructure['maintenanceLogs'][0]> & { facilityId: string }): Promise<Infrastructure['maintenanceLogs'][0]> => {
     const response = await api.post('/admin/infrastructure/maintenance', data, {
       successMessage: 'Maintenance log created successfully.'
     });
@@ -383,6 +383,20 @@ export const infrastructureService = {
     await api.delete(`/admin/infrastructure/assets/${assetId}`, {
       successMessage: 'Asset deleted successfully.'
     });
+  },
+
+  createFacility: async (data: Record<string, unknown>) => {
+    const response = await api.post('/admin/infrastructure/facilities', data);
+    return response.data;
+  },
+
+  updateFacility: async (facilityId: string, data: Record<string, unknown>) => {
+    const response = await api.put(`/admin/infrastructure/facilities/${facilityId}`, data);
+    return response.data;
+  },
+
+  deleteFacility: async (facilityId: string) => {
+    await api.delete(`/admin/infrastructure/facilities/${facilityId}`);
   },
 };
 
@@ -494,7 +508,7 @@ export const mediaManagementService = {
 // ============================================
 export const userManagementService = {
   // All users
-  getAllUsers: async (filters?: { role?: string; search?: string; page?: number; limit?: number }): Promise<{ users: AdminUser[]; total: number; page: number; pages: number }> => {
+  getAllUsers: async (filters?: { role?: string; search?: string; page?: number; limit?: number; status?: string; class?: string; department?: string; position?: string; gender?: string; sortBy?: string; sortOrder?: string }): Promise<{ users: AdminUser[]; total: number; page: number; pages: number }> => {
     const response = await api.get('/admin/users', { params: filters });
     return response.data;
   },
@@ -526,7 +540,7 @@ export const userManagementService = {
     }
   },
 
-  createUser: async (data: { email: string; firstName: string; lastName: string; role: string; phone?: string; password: string }): Promise<AdminUser> => {
+  createUser: async (data: Record<string, unknown> & { role: string; password?: string }): Promise<AdminUser> => {
     const response = await api.post('/admin/users', data, {
       successMessage: 'User created successfully.'
     });
@@ -581,7 +595,7 @@ export const userManagementService = {
     return response.data;
   },
 
-  bulkExport: async (filters: { role?: string; format?: 'csv' | 'excel' }): Promise<Blob> => {
+  bulkExport: async (filters: { role?: string; format?: 'csv' | 'excel' | 'pdf' }): Promise<Blob> => {
     const response = await api.get('/admin/users/bulk-export', {
       params: filters,
       responseType: 'blob'
@@ -620,9 +634,8 @@ export const userManagementService = {
     });
   },
 
-  bulkImportStudents: async (file: File): Promise<any> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  bulkImportStudents: async (file: File | FormData): Promise<any> => {
+    const formData = file instanceof FormData ? file : (() => { const fd = new FormData(); fd.append('file', file); return fd; })();
     const response = await api.post('/admin/users/bulk-import-students', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       successMessage: 'Students imported successfully.'
@@ -630,13 +643,38 @@ export const userManagementService = {
     return response.data;
   },
 
-  bulkImportUsers: async (file: File): Promise<any> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  bulkImportUsers: async (file: File | FormData): Promise<any> => {
+    const formData = file instanceof FormData ? file : (() => { const fd = new FormData(); fd.append('file', file); return fd; })();
     const response = await api.post('/admin/users/bulk-import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       successMessage: 'Users imported successfully.'
     });
+    return response.data;
+  },
+
+  getStudentStats: async () => {
+    const response = await api.get('/admin/users/students/stats');
+    return response.data;
+  },
+
+  graduateStudent: async (studentId: string, data?: Record<string, unknown>) => {
+    const response = await api.post(`/admin/users/students/${studentId}/graduate`, data ?? {});
+    return response.data;
+  },
+
+  transferStudent: async (studentId: string, data: Record<string, unknown>) => {
+    const response = await api.post(`/admin/users/students/${studentId}/transfer`, data);
+    return response.data;
+  },
+
+  exportStaffData: async (filters?: { format?: 'csv' | 'excel' | 'pdf'; department?: string; status?: string } | 'csv' | 'excel' | 'pdf') => {
+    const params = typeof filters === 'string' ? { format: filters } : filters;
+    const response = await api.get('/admin/users/staff/export', { params, responseType: 'blob' });
+    return response.data;
+  },
+
+  exportUsers: async (filters?: { role?: string; format?: 'csv' | 'excel' | 'pdf'; status?: string; class?: string }) => {
+    const response = await api.get('/admin/users/export', { params: filters, responseType: 'blob' });
     return response.data;
   },
 };
@@ -788,12 +826,51 @@ export const academicManagementService: any = {
     });
   },
 
-  bulkExport: async (filters: { type: 'grading'; ids?: string[] }): Promise<Blob> => {
-    const response = await api.get('/admin/academic/grading-systems/export', {
+  bulkExport: async (filters: {
+    type: 'grading' | 'results';
+    ids?: string[];
+    format?: 'csv' | 'excel' | 'pdf';
+    filters?: Record<string, string | undefined>;
+  }): Promise<Blob> => {
+    const endpoint = filters.type === 'results'
+      ? '/admin/academic/results/export'
+      : '/admin/academic/grading-systems/export';
+    const response = await api.get(endpoint, {
       params: filters,
       responseType: 'blob'
     });
     return response.data;
+  },
+
+  getResults: async (): Promise<any[]> => {
+    const response = await api.get('/admin/academic/results');
+    return response.data?.data ?? response.data ?? [];
+  },
+
+  createResult: async (data: Record<string, unknown>): Promise<any> => {
+    const response = await api.post('/admin/academic/results', data, {
+      successMessage: 'Result added successfully.'
+    });
+    return response.data;
+  },
+
+  updateResult: async (resultId: string, data: Record<string, unknown>): Promise<any> => {
+    const response = await api.put(`/admin/academic/results/${resultId}`, data, {
+      successMessage: 'Result updated successfully.'
+    });
+    return response.data;
+  },
+
+  deleteResult: async (resultId: string): Promise<void> => {
+    await api.delete(`/admin/academic/results/${resultId}`, {
+      successMessage: 'Result deleted successfully.'
+    });
+  },
+
+  bulkAdjustScores: async (adjustments: Array<{ id: string; score: number }>): Promise<void> => {
+    await api.post('/admin/academic/results/bulk-adjust', { adjustments }, {
+      successMessage: 'Scores adjusted successfully.'
+    });
   },
 
   bulkImport: async (type: 'grading', file: File): Promise<GradingSystem[]> => {
@@ -1317,6 +1394,28 @@ export const reportsCenterService: any = {
     });
     return response.data;
   },
+
+  generateKcseAnalysis: async (year: string | number): Promise<Blob> => {
+    const parsedYear = typeof year === 'string' ? Number.parseInt(year, 10) : year;
+    return reportsCenterService.generateKCSEAnalysis(parsedYear);
+  },
+
+  getKcseExamSummary: async (year: string | number, examType = 'KCSE') => {
+    const parsedYear = typeof year === 'string' ? Number.parseInt(year, 10) : year;
+    const response = await api.get(`/admin/reports/kcse/${parsedYear}/summary`, {
+      params: { examType },
+    });
+    return response.data;
+  },
+
+  exportExamResults: async (year: string | number, examType: string, format: 'excel' | 'pdf' | 'csv') => {
+    const parsedYear = typeof year === 'string' ? Number.parseInt(year, 10) : year;
+    const response = await api.get(`/admin/reports/kcse/${parsedYear}/export`, {
+      params: { examType, format },
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // ============================================
@@ -1378,10 +1477,11 @@ export const systemSettingsService = {
   },
 
   // Backup & Restore
-  createBackup: async (): Promise<void> => {
-    await api.post('/admin/settings/backup/create', {}, {
+  createBackup: async (options?: { type?: 'full' | 'database' | 'media' | 'config'; uploadToCloud?: boolean }): Promise<{ filename: string; size: number; id?: string }> => {
+    const response = await api.post('/admin/settings/backup/create', options || {}, {
       successMessage: 'Backup created successfully.'
     });
+    return response.data;
   },
 
   restoreBackup: async (backup: string | File): Promise<void> => {
@@ -1409,8 +1509,8 @@ export const systemSettingsService = {
   },
 
   // System Operations
-  clearCache: async (): Promise<void> => {
-    await api.post('/admin/settings/cache/clear', {}, {
+  clearCache: async (type: 'all' | 'redis' | 'memory' | 'views' = 'all'): Promise<void> => {
+    await api.post('/admin/settings/cache/clear', { type }, {
       successMessage: 'Cache cleared successfully.'
     });
   },
@@ -1501,6 +1601,69 @@ export const systemSettingsService = {
 
   restoreFromFile: async (_file: File): Promise<void> => {
     // Stub for file restore
+  },
+
+  getApiKeys: async () => {
+    const response = await api.get('/admin/settings/api-keys');
+    return response.data;
+  },
+
+  getWebhooks: async () => {
+    const response = await api.get('/admin/settings/webhooks');
+    return response.data;
+  },
+
+  getBackupHistory: async () => {
+    const response = await api.get('/admin/settings/backup/list');
+    return response.data;
+  },
+
+  updateMPESASettings: async (data: SystemSettings['mpesa']) => {
+    const response = await api.patch('/admin/settings/mpesa', data, {
+      successMessage: 'MPESA settings updated successfully.'
+    });
+    return response.data;
+  },
+
+  updateIntegrationSettings: async (data: Record<string, unknown>) => {
+    const response = await api.patch('/admin/settings/integrations', data);
+    return response.data;
+  },
+
+  updateAuthSettings: async (data: SystemSettings['security']) => {
+    const response = await api.patch('/admin/settings/security', data, {
+      successMessage: 'Authentication settings updated successfully.'
+    });
+    return response.data;
+  },
+
+  testConnection: async (type?: string) => {
+    const response = await api.post('/admin/settings/test-connection', { type });
+    return response.data;
+  },
+
+  generateApiKey: async (nameOrData?: string | { name?: string; permissions?: string[] }) => {
+    const payload = typeof nameOrData === 'string' ? { name: nameOrData } : nameOrData;
+    const response = await api.post('/admin/settings/api-keys', payload);
+    return response.data;
+  },
+
+  revokeApiKey: async (keyId: string) => {
+    await api.delete(`/admin/settings/api-keys/${keyId}`);
+  },
+
+  createWebhook: async (data: Record<string, unknown>) => {
+    const response = await api.post('/admin/settings/webhooks', data);
+    return response.data;
+  },
+
+  deleteWebhook: async (webhookId: string) => {
+    await api.delete(`/admin/settings/webhooks/${webhookId}`);
+  },
+
+  testWebhook: async (webhookId: string) => {
+    const response = await api.post(`/admin/settings/webhooks/${webhookId}/test`);
+    return response.data;
   },
 };
 
@@ -1623,7 +1786,34 @@ export const communicationService: any = {
     return response.data;
   },
   createAnnouncement: async (data: any): Promise<any> => {
-    const response = await api.post('/admin/communication/announcements', data, { successMessage: 'Announcement created successfully.' });
+    const response = await api.post('/admin/communication/announcements', data, {
+      headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+      successMessage: 'Announcement created successfully.'
+    });
+    return response.data;
+  },
+  updateAnnouncement: async (announcementId: string, data: any): Promise<any> => {
+    const response = await api.put(`/admin/communication/announcements/${announcementId}`, data, {
+      headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+      successMessage: 'Announcement updated successfully.'
+    });
+    return response.data;
+  },
+  deleteAnnouncement: async (announcementId: string): Promise<void> => {
+    await api.delete(`/admin/communication/announcements/${announcementId}`, {
+      successMessage: 'Announcement deleted successfully.'
+    });
+  },
+  importAnnouncements: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('title', file.name.replace(/\.[^.]+$/, ''));
+    formData.append('content', `Imported announcement attachment: ${file.name}`);
+    formData.append('targetAudience', 'all');
+    formData.append('media', file);
+    const response = await api.post('/admin/communication/announcements', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      successMessage: 'Announcement import uploaded.'
+    });
     return response.data;
   },
 };
@@ -1683,6 +1873,29 @@ export const notificationService: any = {
 };
 
 export const attendanceService: any = {
+  getAttendanceByDate: async (date: string): Promise<any[]> => {
+    const response = await api.get(`/admin/attendance/date/${date}`);
+    return response.data;
+  },
+  bulkMark: async (date: string, studentIds: string[], status: string): Promise<any> => {
+    const response = await api.post('/admin/attendance/bulk-mark', { date, studentIds, status }, {
+      successMessage: 'Attendance updated successfully.'
+    });
+    return response.data;
+  },
+  exportAttendance: async (date: string): Promise<Blob> => {
+    const response = await api.get(`/admin/attendance/export/${date}`, { responseType: 'blob' });
+    return response.data;
+  },
+  importAttendance: async (date: string, file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/admin/attendance/import/${date}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      successMessage: 'Attendance import received.'
+    });
+    return response.data;
+  },
   getByClass: async (classId: string, startDate?: string, endDate?: string): Promise<any[]> => {
     const response = await api.get(`/admin/attendance/class/${classId}`, { params: { startDate, endDate } });
     return response.data;
@@ -1844,8 +2057,8 @@ export const developerService = {
     const response = await api.post('/admin/developer/execute-sql', { sql }, { successMessage: 'SQL executed.' });
     return response.data;
   },
-  clearCache: async (): Promise<any> => {
-    const response = await api.post('/admin/developer/cache/clear', {}, { successMessage: 'Cache cleared successfully.' });
+  clearCache: async (type: 'all' | 'redis' | 'memory' | 'views' = 'all'): Promise<any> => {
+    const response = await api.post('/admin/developer/cache/clear', { type }, { successMessage: 'Cache cleared successfully.' });
     return response.data;
   },
   getLogs: async (filters?: any): Promise<any[]> => {
@@ -1895,6 +2108,21 @@ export const developerService = {
   },
 };
 
+export const teacherTrackingService = {
+  getTeacherLiveStatus: async (teacherId: string) => {
+    const response = await api.get(`/admin/teachers/${teacherId}/live-status`);
+    return response.data;
+  },
+  getTeacherAttendance: async (teacherId: string, date: string) => {
+    const response = await api.get(`/admin/teachers/${teacherId}/attendance`, { params: { date } });
+    return response.data;
+  },
+  markTeacherAttendance: async (teacherId: string, data: Record<string, unknown>) => {
+    const response = await api.post(`/admin/teachers/${teacherId}/attendance`, data);
+    return response.data;
+  },
+};
+
 export const financeService = financeManagementService;
 export const settingsService = systemSettingsService;
 
@@ -1924,4 +2152,5 @@ export default {
   developerService,
   financeService,
   settingsService,
+  teacherTrackingService,
 };

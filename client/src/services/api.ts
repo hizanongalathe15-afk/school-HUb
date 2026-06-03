@@ -82,7 +82,10 @@ api.interceptors.response.use(
       useAuthStore.getState().logout();
     }
 
-    if (!originalRequest?.silentErrorToast) {
+    const method = originalRequest?.method?.toUpperCase();
+    const isReadRequest = !method || method === 'GET';
+
+    if (!originalRequest?.silentErrorToast && !isReadRequest) {
       notifyError(error);
     }
 
@@ -133,17 +136,18 @@ export const authService = {
     return response.data;
   },
 
-  updateProfile: async (data: Pick<User, 'firstName' | 'lastName'> & { phone?: string; avatar?: string | null }): Promise<User> => {
+  updateProfile: async (data: Pick<User, 'firstName' | 'lastName'> & { phone?: string; avatar?: string | null; address?: string; language?: string }): Promise<User> => {
     const response = await api.patch('/auth/me', data, {
       successMessage: 'Profile saved successfully.'
     });
     return response.data;
   },
 
-  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
-    await api.post('/auth/change-password', { currentPassword, newPassword }, {
+  changePassword: async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string }> => {
+    const response = await api.post('/auth/change-password', { currentPassword, newPassword }, {
       successMessage: 'Password changed successfully.'
     });
+    return response.data ?? { success: true };
   },
 };
 
@@ -850,7 +854,7 @@ export const dashboardModuleService = {
 
 export default api;
 
-export async function getApi<T>(path: string): Promise<T> {
-  const response = await api.get(path);
+export async function getApi<T>(path: string, config?: Parameters<typeof api.get>[1]): Promise<T> {
+  const response = await api.get(path, config);
   return response.data as T;
 }

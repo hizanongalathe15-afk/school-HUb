@@ -1,4 +1,4 @@
-import axios, { type AxiosRequestConfig, type AxiosResponse, type Method } from 'axios';
+import axios, { type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig, type Method } from 'axios';
 import { toast } from 'react-hot-toast';
 import { requestSync } from './swManager';
 
@@ -312,7 +312,7 @@ export async function handleOfflineAxiosError(error: any): Promise<AxiosResponse
     status: 202,
     statusText: 'Accepted Offline',
     headers: {},
-    config: config!,
+    config: config! as InternalAxiosRequestConfig,
   };
 }
 
@@ -332,7 +332,7 @@ export async function queueActionIfOffline(config: AxiosRequestConfig): Promise<
     status: 202,
     statusText: 'Accepted Offline',
     headers: {},
-    config,
+    config: config as InternalAxiosRequestConfig,
   };
 }
 

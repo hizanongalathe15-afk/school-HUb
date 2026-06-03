@@ -4,19 +4,21 @@ export interface Student {
   firstName: string;
   lastName: string;
   middleName?: string;
-  name?: string; // Computed property for UI compatibility (firstName + lastName)
+  name?: string;
   dateOfBirth: string;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | 'male' | 'female';
   class: string;
   classId?: string;
   className?: string;
+  currentClass?: string;
   stream?: string;
   streamId?: string;
   isActive?: boolean;
   admissionDate?: string;
-  boardingStatus?: 'BOARDING' | 'DAY';
+  boardingStatus?: 'BOARDING' | 'DAY' | 'boarding' | 'day';
   parentId: string;
   photo?: string;
+  avatar?: string;
   address?: string;
   phone?: string;
   email?: string;
@@ -31,6 +33,16 @@ export interface Student {
   motherEmail?: string;
   guardianName?: string;
   guardianPhone?: string;
+  parentDetails?: {
+    fatherName?: string;
+    fatherPhone?: string;
+    fatherEmail?: string;
+    motherName?: string;
+    motherPhone?: string;
+    motherEmail?: string;
+    guardianName?: string;
+    guardianPhone?: string;
+  };
   feeDiscount?: number;
   scholarship?: boolean;
   bursary?: boolean;
@@ -52,20 +64,8 @@ export interface Parent {
   updatedAt: string;
 }
 
-export interface Teacher {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  subject: string;
-  classes: string[];
-  photo?: string;
-  qualification?: string;
-  experience?: number;
-  createdAt: string;
-  updatedAt: string;
-}
+/** @deprecated Import Teacher from ./teacher instead */
+export type { Teacher } from './teacher';
 
 export interface Staff {
   id: string;

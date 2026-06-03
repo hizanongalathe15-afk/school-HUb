@@ -8,6 +8,7 @@ export interface Teacher {
   userId: string;
   firstName: string;
   lastName: string;
+  name?: string;
   email: string;
   phone?: string;
   avatar?: string;
@@ -39,6 +40,7 @@ export interface TeacherClass {
   academicLevel: 'form1' | 'form2' | 'form3' | 'form4';
   classTeacher?: string;
   studentCount: number;
+  students?: TeacherStudent[];
   subjects: TeacherSubject[];
   timetable: ClassTimetableSlot[];
   room?: string;
@@ -73,6 +75,10 @@ export interface TeacherStudent {
   guardianName: string;
   guardianPhone: string;
   guardianEmail?: string;
+  parentId?: string;
+  parentName?: string;
+  parentEmail?: string;
+  parentPhone?: string;
   emergencyContact?: string;
   medicalAlerts?: string[];
   specialNeeds?: string;
@@ -200,16 +206,20 @@ export interface HomeworkAssignment {
   description: string;
   classId: string;
   className: string;
+  classStream?: string;
   subjectId: string;
   subjectName: string;
   teacherId: string;
   teacherName: string;
   dueDate: string;
+  dueTime?: string;
   attachments?: string[];
   markingScheme?: string;
   maxMarks: number;
-  status: 'draft' | 'published' | 'completed' | 'graded';
+  status: 'draft' | 'published' | 'completed' | 'graded' | 'archived';
   submissions: HomeworkSubmission[];
+  publishedAt?: string;
+  notificationSent?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -311,8 +321,12 @@ export interface TeacherMessage {
   recipientRole: 'teacher' | 'parent' | 'admin';
   subject: string;
   message: string;
+  messageHtml?: string;
   attachments?: string[];
   isRead: boolean;
+  isStarred?: boolean;
+  isArchived?: boolean;
+  parentMessageId?: string;
   readAt?: string;
   repliedTo?: string;
   createdAt: string;
@@ -341,17 +355,29 @@ export interface ParentTeacherMeeting {
   teacherName: string;
   parentId: string;
   parentName: string;
+  parentEmail?: string;
+  parentPhone?: string;
   studentId: string;
   studentName: string;
+  studentAdmissionNumber?: string;
+  studentClassName?: string;
   scheduledDate: string;
   duration: number;
   mode: 'in_person' | 'video' | 'phone';
   status: 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
   agenda?: string;
-  notes?: string;
-  meetingLink?: string;
+  notes?: string | null;
+  meetingLink?: string | null;
+  meetingLocation?: string | null;
+  recordingUrl?: string | null;
+  feedbackProvided?: boolean;
+  feedback?: string | null;
+  meetingNotes?: string;
   createdAt: string;
   updatedAt: string;
+  confirmedAt?: string | null;
+  completedAt?: string | null;
+  rescheduledFromId?: string | null;
 }
 
 // ============================================
@@ -384,10 +410,15 @@ export interface ExamSchedule {
 }
 
 export interface TeacherTimetable {
+  id?: string;
   teacherId: string;
   teacherName: string;
   week: number;
   year: number;
+  weekStartDate?: string;
+  weekEndDate?: string;
+  substitutions?: any[];
+  swaps?: any[];
   slots: TimetableSlot[];
 }
 
@@ -493,6 +524,9 @@ export interface TeacherNotification {
   message: string;
   data?: any;
   isRead: boolean;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  isArchived?: boolean;
+  isStarred?: boolean;
   readAt?: string;
   actionUrl?: string;
   createdAt: string;

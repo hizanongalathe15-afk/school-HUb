@@ -37,17 +37,27 @@ import {
 } from 'lucide-react';
 import { schoolManagementService, mediaManagementService } from '../../../services/adminService';
 import toast from 'react-hot-toast';
-import type { SchoolProfile } from '../../../types/admin';
+import type { SchoolProfile as SchoolProfileData, AcademicCalendar } from '../../../types/admin';
 import SiteContentManager from './SiteContentManager';
 
 export default function SchoolProfile() {
-  const [profile, setProfile] = useState<SchoolProfile | null>(null);
+  const [profile, setProfile] = useState<SchoolProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  const [formData, setFormData] = useState<Partial<SchoolProfile>>({});
-  const [selectedBranch, setSelectedBranch] = useState<SchoolProfile['branches'][0] | null>(null);
-  const [branchForm, setBranchForm] = useState<Partial<SchoolProfile['branches'][0]>>({ isActive: true });
+  const [formData, setFormData] = useState<Partial<SchoolProfileData>>({});
+  const [selectedBranch, setSelectedBranch] = useState<SchoolProfileData['branches'][0] | null>(null);
+  const [branchForm, setBranchForm] = useState<Partial<SchoolProfileData['branches'][0]>>({ isActive: true });
+
+  const emptyAcademicCalendar = (): AcademicCalendar => ({
+    term1Start: '',
+    term1End: '',
+    term2Start: '',
+    term2End: '',
+    term3Start: '',
+    term3End: '',
+    holidays: [],
+  });
   const [isBranchEditorOpen, setIsBranchEditorOpen] = useState(false);
   const [branchSaving, setBranchSaving] = useState(false);
   const [isEditingBranch, setIsEditingBranch] = useState(false);
@@ -865,7 +875,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term1Start || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term1Start: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term1Start: e.target.value }
                     })}
                   />
                 </div>
@@ -876,7 +886,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term1End || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term1End: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term1End: e.target.value }
                     })}
                   />
                 </div>
@@ -887,7 +897,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term2Start || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term2Start: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term2Start: e.target.value }
                     })}
                   />
                 </div>
@@ -898,7 +908,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term2End || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term2End: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term2End: e.target.value }
                     })}
                   />
                 </div>
@@ -909,7 +919,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term3Start || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term3Start: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term3Start: e.target.value }
                     })}
                   />
                 </div>
@@ -920,7 +930,7 @@ export default function SchoolProfile() {
                     value={formData.academicCalendar?.term3End || ''}
                     onChange={(e) => setFormData({
                       ...formData,
-                      academicCalendar: { ...formData.academicCalendar!, term3End: e.target.value }
+                      academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), term3End: e.target.value }
                     })}
                   />
                 </div>
@@ -938,7 +948,7 @@ export default function SchoolProfile() {
                         onChange={(e) => {
                           const holidays = [...(formData.academicCalendar?.holidays || [])];
                           holidays[index].name = e.target.value;
-                          setFormData({ ...formData, academicCalendar: { ...formData.academicCalendar!, holidays } });
+                          setFormData({ ...formData, academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), holidays } });
                         }}
                       />
                       <input
@@ -947,7 +957,7 @@ export default function SchoolProfile() {
                         onChange={(e) => {
                           const holidays = [...(formData.academicCalendar?.holidays || [])];
                           holidays[index].startDate = e.target.value;
-                          setFormData({ ...formData, academicCalendar: { ...formData.academicCalendar!, holidays } });
+                          setFormData({ ...formData, academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), holidays } });
                         }}
                       />
                       <input
@@ -956,7 +966,7 @@ export default function SchoolProfile() {
                         onChange={(e) => {
                           const holidays = [...(formData.academicCalendar?.holidays || [])];
                           holidays[index].endDate = e.target.value;
-                          setFormData({ ...formData, academicCalendar: { ...formData.academicCalendar!, holidays } });
+                          setFormData({ ...formData, academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), holidays } });
                         }}
                       />
                       <button
@@ -964,7 +974,7 @@ export default function SchoolProfile() {
                         onClick={() => {
                           const holidays = [...(formData.academicCalendar?.holidays || [])];
                           holidays.splice(index, 1);
-                          setFormData({ ...formData, academicCalendar: { ...formData.academicCalendar!, holidays } });
+                          setFormData({ ...formData, academicCalendar: { ...(formData.academicCalendar ?? emptyAcademicCalendar()), holidays } });
                         }}
                       >
                         <Trash2 size={16} />
@@ -975,7 +985,7 @@ export default function SchoolProfile() {
                 <button
                   className="btn-add"
                   onClick={() => {
-                    const existing = formData.academicCalendar || {};
+                    const existing = formData.academicCalendar ?? emptyAcademicCalendar();
                     const holidays = [...(existing.holidays || []), { name: '', startDate: '', endDate: '' }];
                     setFormData({ ...formData, academicCalendar: { ...existing, holidays } });
                   }}

@@ -27,8 +27,10 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { TeacherTimetable as BaseTeacherTimetable } from '../../../types/teacher';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
-interface TimetableSlot {
+interface TimetableSlotView {
   id: string;
   day: string;
   dayIndex: number;
@@ -50,16 +52,14 @@ interface TimetableSlot {
   color?: string;
 }
 
-interface TeacherTimetable {
+type TeacherTimetable = BaseTeacherTimetable & {
   id: string;
-  teacherId: string;
-  teacherName: string;
   weekStartDate: string;
   weekEndDate: string;
-  slots: TimetableSlot[];
+  slots: TimetableSlotView[];
   substitutions: Substitution[];
   swaps: SwapRequest[];
-}
+};
 
 interface Substitution {
   id: string;
@@ -138,10 +138,10 @@ const TeacherTimetablePage: React.FC = () => {
   const [showSubstituteModal, setShowSubstituteModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<TimetableSlot | null>(null);
-  const [editingSlot, setEditingSlot] = useState<TimetableSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<TimetableSlotView | null>(null);
+  const [editingSlot, setEditingSlot] = useState<TimetableSlotView | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const [swapTargetSlot, setSwapTargetSlot] = useState<TimetableSlot | null>(null);
+  const [swapTargetSlot, setSwapTargetSlot] = useState<TimetableSlotView | null>(null);
   
   const [requestFormData, setRequestFormData] = useState({
     type: 'swap' as 'swap' | 'substitution',
@@ -206,7 +206,7 @@ const TeacherTimetablePage: React.FC = () => {
     }
   };
 
-  const getSlot = (day: string, periodNumber: number): TimetableSlot | undefined => {
+  const getSlot = (day: string, periodNumber: number): TimetableSlotView | undefined => {
     return timetable?.slots.find(s => s.day === day && s.period === periodNumber);
   };
 
@@ -314,13 +314,7 @@ const TeacherTimetablePage: React.FC = () => {
   const exportTimetable = async (format: 'pdf' | 'excel') => {
     try {
       const response = await teacherService.timetable.exportTimetable({ format, weekOffset: currentWeekOffset });
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `timetable_week_${currentWeekOffset}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(response.data, `timetable_week_${currentWeekOffset}.${format}`);
       toast.success(`Exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);
@@ -344,7 +338,7 @@ const TeacherTimetablePage: React.FC = () => {
 
   const weekRange = getWeekRange();
 
-  const SortableSlot = ({ slot, day, period }: { slot?: TimetableSlot; day: string; period: number }) => {
+  const SortableSlot = ({ slot, day, period }: { slot?: TimetableSlotView; day: string; period: number }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: slot?.id || `${day}-${period}`,
       disabled: !slot,
@@ -923,7 +917,7 @@ const TeacherTimetablePage: React.FC = () => {
         <ConfirmDialog
           isOpen={confirmation.isOpen}
           onClose={confirmation.cancel}
-          onConfirm={confirmation.confirm}
+          onConfirm={confirmation.handleConfirm}
           title={confirmation.config.title}
           message={confirmation.config.message}
           confirmText={confirmation.config.confirmText}

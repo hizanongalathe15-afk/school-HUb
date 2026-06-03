@@ -1,4 +1,4 @@
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useParams } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import { useAuthStore } from './store/authStore';
 import { Toaster } from 'react-hot-toast';
@@ -76,9 +76,22 @@ import BursarMPESAPage from './components/roles/bursar/BursarMPESAPage';
 import BursarFeeManagementPage from './components/roles/bursar/BursarFeeManagementPage';
 import BursarRecordPaymentsPage from './components/roles/bursar/BursarRecordPaymentsPage';
 import BursarArrearsPage from './components/roles/bursar/BursarArrearsPage';
+import BursarInvoicesPage from './components/roles/bursar/BursarInvoicesPage';
+import BursarPaymentPlansPage from './components/roles/bursar/BursarPaymentPlansPage';
+import BursarSalaryStructuresPage from './components/roles/bursar/BursarSalaryStructuresPage';
+import BursarSalaryAdvancesPage from './components/roles/bursar/BursarSalaryAdvancesPage';
+import BursarBankingPage from './components/roles/bursar/BursarBankingPage';
+import BursarFixedAssetsPage from './components/roles/bursar/BursarFixedAssetsPage';
+import BursarPettyCashPage from './components/roles/bursar/BursarPettyCashPage';
+import BursarAnalyticsPage from './components/roles/bursar/BursarAnalyticsPage';
+import BursarStudentFeesPage from './components/roles/bursar/BursarStudentFeesPage';
+import BursarBulkOperationsPage from './components/roles/bursar/BursarBulkOperationsPage';
+import BursarAuditPage from './components/roles/bursar/BursarAuditPage';
+import BursarProjectsPage from './components/roles/bursar/BursarProjectsPage';
+import BursarSettingsPage from './components/roles/bursar/BursarSettingsPage';
 import { StoreKeeperDashboard } from './components/roles/storekeeper';
-import PlaceholderPage from './components/roles/shared/PlaceholderPage';
 import DashboardSearchPage from './components/roles/shared/DashboardSearchPage';
+import RoleNotificationsPage from './components/roles/shared/RoleNotificationsPage';
 import StoreKeeperInventoryPage from './components/roles/storekeeper/StoreKeeperInventoryPage';
 import StoreKeeperRequestsPage from './components/roles/storekeeper/StoreKeeperRequestsPage';
 import StoreKeeperPurchaseOrdersPage from './components/roles/storekeeper/StoreKeeperPurchaseOrdersPage';
@@ -109,10 +122,40 @@ import PublicPage from './pages/PublicPage';
 import { getDashboardPathForRole } from './utils/roleRoutes';
 import OfflineResilience from './components/OfflineResilience';
 
+function LegacyTeacherRedirect() {
+  const params = useParams();
+  const rest = params['*'] ? `/${params['*']}` : '/dashboard';
+  return <Navigate to={`/teacher${rest}`} replace />;
+}
+
+function LegacyParentRedirect() {
+  const params = useParams();
+  const rest = params['*'] ? `/${params['*']}` : '';
+  return <Navigate to={`/dashboard/parent${rest}`} replace />;
+}
+
+function LegacyBursarRedirect() {
+  const params = useParams();
+  const rest = params['*'] ? `/${params['*']}` : '';
+  return <Navigate to={`/dashboard/bursar${rest}`} replace />;
+}
+
+function LegacyStoreRedirect() {
+  const params = useParams();
+  const rest = params['*'] ? `/${params['*']}` : '';
+  return <Navigate to={`/dashboard/store${rest}`} replace />;
+}
+
 // Dashboard redirect component
 function DashboardRedirect() {
-  const { user } = useAuthStore();
-  return <Navigate to={getDashboardPathForRole(user?.role)} replace />;
+  try {
+    const { user } = useAuthStore();
+    if (!user) return <Navigate to="/" replace />;
+    return <Navigate to={getDashboardPathForRole(user.role)} replace />;
+  } catch (error) {
+    console.error('Error in DashboardRedirect:', error);
+    return <Navigate to="/" replace />;
+  }
 }
 
 // Admin Routes
@@ -190,8 +233,7 @@ function AdminRoutes() {
 function ParentRoutes() {
   return (
     <Route path="/dashboard/parent" element={<ParentDashboard />}>
-      <Route index element={<Navigate to="dashboard" replace />} />
-      <Route path="dashboard" element={<ParentDashboard />} />
+      <Route index element={null} />
       <Route path="children" element={<ParentChildren />} />
       <Route path="academic" element={<ParentAcademic />} />
       <Route path="attendance" element={<ParentAttendance />} />
@@ -215,22 +257,16 @@ function ParentRoutes() {
       <Route path="transport" element={<ParentTransport />} />
       <Route path="support" element={<ParentSupport />} />
       <Route path="search" element={<DashboardSearchPage />} />
+      <Route path="*" element={<Navigate to="/dashboard/parent" replace />} />
     </Route>
   );
 }
 
 function TeacherRoutes() {
-  const examItems = ['View Exam Timetable', 'Invigilation Duties', 'Exam Rules', 'Mark Papers', 'Enter Exam Scores', 'Record Absentees', 'Report Irregularities', 'Exam Analysis', 'Print Exam Results'];
-  const resourceItems = ['Request Classroom Maintenance', 'Book Science Laboratory', 'Book Computer Laboratory', 'Book Library Session', 'Book Sports Field', 'Report Facility Issues', 'Request Teaching Aids', 'Borrow Equipment', 'Request Printing', 'Track Borrowed Items', 'Report Damaged Equipment', 'Borrowing History'];
-  const cocurricularItems = ['Sports Team', 'Team Members', 'Register Students for Sports', 'Training Schedule', 'Fixtures & Matches', 'Match Results', 'Club Members', 'Plan Club Activities', 'Record Achievements', 'Field Trip Participation', 'Event Supervision Duty'];
-  const developmentItems = ['Training Opportunities', 'Workshop Registration', 'Learning Materials', 'CPD Hours', 'Training Requests', 'Performance Review', 'HOD Feedback', 'Self Assessment', 'Professional Goals', 'Certificates'];
-  const reportItems = ['Class Performance Report', 'Subject Performance Report', 'Attendance Summary Report', 'Homework Completion Report', 'Discipline Summary Report', 'Student Academic Report', 'Student Attendance Report', 'Student Behavior Report', 'Progress Chart', 'Topic Mastery Report', 'Grade Distribution', 'Pass Rate Analysis', 'Class Ranking', 'Export to Excel', 'Export to PDF', 'Print Reports'];
-  const supportItems = ['Help & Documentation', 'User Manual', 'Video Tutorials', 'FAQ', 'Submit Support Ticket', 'Contact Administrator', 'Report System Bug', 'Request Feature', 'System Status'];
-
   return (
     <Route path="/teacher" element={<TeacherDashboard />}>
       <Route index element={<Navigate to="dashboard" replace />} />
-      <Route path="dashboard" element={<TeacherDashboard />} />
+      <Route path="dashboard" element={null} />
       <Route path="classes" element={<TeacherClassesPage />} />
       <Route path="classes/*" element={<TeacherClassesPage />} />
       <Route path="students" element={<TeacherStudentsPage />} />
@@ -276,6 +312,7 @@ function TeacherRoutes() {
       <Route path="alerts" element={<TeacherAlertsPage />} />
       <Route path="alerts/*" element={<TeacherAlertsPage />} />
       <Route path="search" element={<DashboardSearchPage />} />
+      <Route path="*" element={<Navigate to="/teacher/dashboard" replace />} />
     </Route>
   );
 }
@@ -283,47 +320,54 @@ function TeacherRoutes() {
 function BursarRoutes() {
   return (
     <Route path="/dashboard/bursar" element={<BursarDashboard />}>
+      <Route index element={null} />
       <Route path="fees" element={<BursarFeeManagementPage />} />
       <Route path="fees/payments" element={<BursarRecordPaymentsPage />} />
       <Route path="fees/arrears" element={<BursarArrearsPage />} />
       <Route path="fees/structures" element={<BursarFeeManagementPage />} />
-      <Route path="fees/invoices" element={<PlaceholderPage title="Invoices" description="Create, send, cancel, and track fee invoices from this workspace." />} />
-      <Route path="fees/payment-plans" element={<PlaceholderPage title="Payment Plans" description="Build and monitor student payment plans without mixing them into fee structure screens." />} />
+      <Route path="fees/invoices" element={<BursarInvoicesPage />} />
+      <Route path="fees/payment-plans" element={<BursarPaymentPlansPage />} />
+      <Route path="fees/*" element={<BursarFeeManagementPage />} />
+      <Route path="fee-collection/*" element={<BursarRecordPaymentsPage />} />
+      <Route path="arrears" element={<BursarArrearsPage />} />
+      <Route path="arrears/*" element={<BursarArrearsPage />} />
+      <Route path="invoices" element={<BursarInvoicesPage />} />
+      <Route path="invoices/*" element={<BursarInvoicesPage />} />
       <Route path="expenses" element={<BursarExpenseManagementPage />} />
-      <Route path="expenses/list" element={<BursarExpenseManagementPage />} />
-      <Route path="expenses/record" element={<BursarExpenseManagementPage />} />
-      <Route path="expenses/categories" element={<PlaceholderPage title="Expense Categories" description="Manage expense categories separately from the expense register." />} />
+      <Route path="expenses/*" element={<BursarExpenseManagementPage />} />
+      <Route path="petty-cash/*" element={<BursarPettyCashPage />} />
       <Route path="payroll" element={<BursarPayrollPage />} />
       <Route path="payroll/runs" element={<BursarPayrollPage />} />
-      <Route path="payroll/structures" element={<PlaceholderPage title="Salary Structures" description="Maintain salary bands and allowances separately from payroll runs." />} />
-      <Route path="payroll/advances" element={<PlaceholderPage title="Salary Advances" description="Record, approve, and recover salary advances in a dedicated workspace." />} />
-      <Route path="payroll/payslips" element={<PlaceholderPage title="Payslips" description="Generate and reprint staff payslips from this workspace." />} />
+      <Route path="payroll/structures" element={<BursarSalaryStructuresPage />} />
+      <Route path="payroll/advances" element={<BursarSalaryAdvancesPage />} />
+      <Route path="payroll/payslips" element={<BursarPayrollPage />} />
+      <Route path="payroll/*" element={<BursarPayrollPage />} />
       <Route path="budget" element={<BursarBudgetPage />} />
-      <Route path="budget/list" element={<BursarBudgetPage />} />
-      <Route path="budget/create" element={<BursarBudgetPage />} />
-      <Route path="budget/reports" element={<BursarFinancialReportsPage />} />
+      <Route path="budget/*" element={<BursarBudgetPage />} />
       <Route path="scholarships" element={<BursarScholarshipsPage />} />
-      <Route path="scholarships/list" element={<BursarScholarshipsPage />} />
-      <Route path="bursaries/list" element={<PlaceholderPage title="Bursaries" description="Manage bursary programs separately from scholarship awards." />} />
-      <Route path="scholarships/applications" element={<PlaceholderPage title="Scholarship Applications" description="Review, approve, and reject student aid applications." />} />
+      <Route path="scholarships/*" element={<BursarScholarshipsPage />} />
+      <Route path="bursaries/*" element={<BursarScholarshipsPage />} />
       <Route path="mpesa" element={<BursarMPESAPage />} />
-      <Route path="mpesa/transactions" element={<BursarMPESAPage />} />
-      <Route path="mpesa/reconcile" element={<PlaceholderPage title="MPESA Reconciliation" description="Match MPESA transactions to fee payments and unresolved receipts." />} />
-      <Route path="banking" element={<PlaceholderPage title="Banking" description="Manage bank accounts, statements, and reconciliation work." />} />
-      <Route path="banking/accounts" element={<PlaceholderPage title="Bank Accounts" description="Maintain school bank accounts separately from MPESA transactions." />} />
-      <Route path="banking/reconciliation" element={<PlaceholderPage title="Bank Reconciliation" description="Reconcile imported bank statement lines against recorded payments and expenses." />} />
-      <Route path="banking/statements" element={<PlaceholderPage title="Bank Statements" description="Upload and review bank statements." />} />
-      <Route path="fixed-assets" element={<PlaceholderPage title="Fixed Assets" description="Register, depreciate, transfer, and dispose school assets." />} />
+      <Route path="mpesa/*" element={<BursarMPESAPage />} />
+      <Route path="banking" element={<BursarBankingPage />} />
+      <Route path="banking/*" element={<BursarBankingPage />} />
+      <Route path="fixed-assets" element={<BursarFixedAssetsPage />} />
+      <Route path="fixed-assets/*" element={<BursarFixedAssetsPage />} />
+      <Route path="analytics/*" element={<BursarAnalyticsPage />} />
+      <Route path="student-fees/*" element={<BursarStudentFeesPage />} />
+      <Route path="bulk/*" element={<BursarBulkOperationsPage />} />
+      <Route path="bulk-operations/*" element={<BursarBulkOperationsPage />} />
+      <Route path="audit-compliance/*" element={<BursarAuditPage />} />
+      <Route path="projects/*" element={<BursarProjectsPage />} />
       <Route path="reports" element={<BursarFinancialReportsPage />} />
-      <Route path="reports/financial" element={<BursarFinancialReportsPage />} />
-      <Route path="reports/fees" element={<BursarFinancialReportsPage />} />
-      <Route path="reports/expenses" element={<BursarFinancialReportsPage />} />
-      <Route path="reports/payroll" element={<BursarFinancialReportsPage />} />
-      <Route path="settings" element={<BursarProfile />} />
+      <Route path="reports/*" element={<BursarFinancialReportsPage />} />
+      <Route path="settings" element={<BursarSettingsPage />} />
+      <Route path="settings/*" element={<BursarSettingsPage />} />
       <Route path="profile" element={<BursarProfile />} />
-      <Route path="messages" element={<PlaceholderPage title="Messages" />} />
-      <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
+      <Route path="notifications" element={<RoleNotificationsPage role="bursar" />} />
+      <Route path="messages" element={<RoleNotificationsPage role="bursar" />} />
       <Route path="search" element={<DashboardSearchPage />} />
+      <Route path="*" element={<Navigate to="/dashboard/bursar" replace />} />
     </Route>
   );
 }
@@ -331,28 +375,48 @@ function BursarRoutes() {
 function StoreRoutes() {
   return (
     <Route path="/dashboard/store" element={<StoreKeeperDashboard />}>
+      <Route index element={null} />
       <Route path="inventory" element={<StoreKeeperInventoryPage />} />
       <Route path="inventory/add" element={<StoreKeeperInventoryPage />} />
       <Route path="inventory/low-stock" element={<StoreKeeperLowStockPage />} />
       <Route path="inventory/expiring" element={<StoreKeeperExpiringPage />} />
+      <Route path="inventory/*" element={<StoreKeeperInventoryPage />} />
+      <Route path="categories" element={<StoreKeeperSettingsPage />} />
+      <Route path="categories/*" element={<StoreKeeperSettingsPage />} />
       <Route path="requests" element={<StoreKeeperRequestsPage />} />
-      <Route path="requests/:requestId" element={<StoreKeeperRequestsPage />} /> {/* Detail can be modal in page */}
+      <Route path="requests/*" element={<StoreKeeperRequestsPage />} />
       <Route path="issues" element={<StoreKeeperIssuesPage />} />
+      <Route path="issues/*" element={<StoreKeeperIssuesPage />} />
       <Route path="returns" element={<StoreKeeperReturnsPage />} />
+      <Route path="returns/*" element={<StoreKeeperReturnsPage />} />
       <Route path="movements" element={<StoreKeeperMovementsPage />} />
+      <Route path="movements/*" element={<StoreKeeperMovementsPage />} />
       <Route path="purchase-orders" element={<StoreKeeperPurchaseOrdersPage />} />
-      <Route path="purchase-orders/create" element={<StoreKeeperPurchaseOrdersPage />} />
+      <Route path="purchase-orders/*" element={<StoreKeeperPurchaseOrdersPage />} />
       <Route path="deliveries" element={<StoreKeeperDeliveriesPage />} />
+      <Route path="deliveries/*" element={<StoreKeeperDeliveriesPage />} />
       <Route path="suppliers" element={<StoreKeeperSuppliersPage />} />
+      <Route path="suppliers/*" element={<StoreKeeperSuppliersPage />} />
       <Route path="locations" element={<StoreKeeperLocationsPage />} />
+      <Route path="locations/*" element={<StoreKeeperLocationsPage />} />
       <Route path="alerts" element={<StoreKeeperAlertsPage />} />
+      <Route path="alerts/*" element={<StoreKeeperAlertsPage />} />
       <Route path="stock-take" element={<StoreKeeperStockTakePage />} />
+      <Route path="stock-take/*" element={<StoreKeeperStockTakePage />} />
       <Route path="fixed-assets" element={<StoreKeeperFixedAssetsPage />} />
+      <Route path="fixed-assets/*" element={<StoreKeeperFixedAssetsPage />} />
       <Route path="reports" element={<StoreKeeperReportsPage />} />
+      <Route path="reports/*" element={<StoreKeeperReportsPage />} />
+      <Route path="analytics/*" element={<StoreKeeperReportsPage />} />
+      <Route path="audit/*" element={<StoreKeeperReportsPage />} />
       <Route path="settings" element={<StoreKeeperSettingsPage />} />
-      <Route path="messages" element={<PlaceholderPage title="Messages" />} />
-      <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
+      <Route path="settings/*" element={<StoreKeeperSettingsPage />} />
+      <Route path="profile" element={<StoreKeeperSettingsPage />} />
+      <Route path="support" element={<StoreKeeperSettingsPage />} />
+      <Route path="notifications" element={<RoleNotificationsPage role="storekeeper" />} />
+      <Route path="messages" element={<RoleNotificationsPage role="storekeeper" />} />
       <Route path="search" element={<DashboardSearchPage />} />
+      <Route path="*" element={<Navigate to="/dashboard/store" replace />} />
     </Route>
   );
 }
@@ -368,15 +432,6 @@ function PublicSite() {
           <h1>Unable to load school content.</h1>
           <p>{error}</p>
         </div>
-      </main>
-    );
-  }
-
-  if (!content) {
-    return (
-      <main className="state-screen">
-        <div className="loader" />
-        <p>Loading school experience...</p>
       </main>
     );
   }
@@ -428,12 +483,16 @@ export default function App() {
         <Route element={<ProtectedRoute roles={['PARENT']} />}>
           {ParentRoutes()}
         </Route>
+        <Route path="/parent/*" element={<LegacyParentRedirect />} />
+        <Route path="/dashboard/teacher/*" element={<LegacyTeacherRedirect />} />
         <Route element={<ProtectedRoute roles={['TEACHER']} />}>
           {TeacherRoutes()}
         </Route>
+        <Route path="/bursar/*" element={<LegacyBursarRedirect />} />
         <Route element={<ProtectedRoute roles={['BURSAR']} />}>
           {BursarRoutes()}
         </Route>
+        <Route path="/storekeeper/*" element={<LegacyStoreRedirect />} />
         <Route element={<ProtectedRoute roles={['STORE_KEEPER']} />}>
           {StoreRoutes()}
         </Route>

@@ -27,7 +27,8 @@ import {
   Stethoscope,
   Ambulance,
   Briefcase,
-  ClipboardList
+  ClipboardList,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import parentService from '../../../services/parentService';

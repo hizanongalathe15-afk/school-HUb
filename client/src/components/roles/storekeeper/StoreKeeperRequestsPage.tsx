@@ -15,10 +15,14 @@ import { Button } from '../../ui/Button';
 import { Spinner } from '../../ui/Spinner';
 import storeKeeperService from '../../../services/storeKeeperService';
 import { clsx } from 'clsx';
+import type { StockRequest, RequestItem as BaseRequestItem } from '../../../types/storeKeeper';
 
-interface Request {
-  id: string;
-  requestNumber: string;
+type RequestItem = BaseRequestItem & {
+  issuedQuantity?: number;
+  stockAvailable: number;
+};
+
+type Request = StockRequest & {
   title: string;
   description: string;
   requestedBy: string;
@@ -26,29 +30,14 @@ interface Request {
   requesterType: 'teacher' | 'student' | 'staff';
   requesterClass?: string;
   requesterDepartment?: string;
-  items: RequestItem[];
-  status: 'pending' | 'approved' | 'partial' | 'rejected' | 'completed' | 'cancelled';
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  status: StockRequest['status'] | 'partial' | 'completed' | 'cancelled';
   requestType: string;
   dateNeeded: string;
-  createdAt: string;
-  approvedAt?: string;
   rejectedAt?: string;
-  rejectionReason?: string;
   approvalNotes?: string;
   expectedPickupDate?: string;
   expectedDeliveryDate?: string;
-}
-
-interface RequestItem {
-  itemId: string;
-  itemName: string;
-  requestedQuantity: number;
-  approvedQuantity?: number;
-  issuedQuantity?: number;
-  unit: string;
-  stockAvailable: number;
-}
+};
 
 const Tools = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

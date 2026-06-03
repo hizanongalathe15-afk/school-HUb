@@ -8,6 +8,10 @@ import { runtimeMetricsService } from '../services/runtimeMetricsService.js';
 const prisma = new PrismaClient();
 let previousCpuSnapshot: ReturnType<typeof os.cpus> | null = null;
 let previousNetworkSnapshot: Array<{ name: string; rx: number; tx: number; errors: number }> | null = null;
+let previousNetworkSampledAt: number | null = null;
+const networkDownloadHistory: number[] = [];
+const networkUploadHistory: number[] = [];
+const NETWORK_HISTORY_LIMIT = 60;
 
 function canViewSystemMetrics(role?: string) {
   return role === 'ADMIN' || role === 'PRINCIPAL';
@@ -93,7 +97,10 @@ function readNetworkInterfaces() {
 function readNetworkMetrics() {
   const interfaces = readNetworkInterfaces();
   const previous = previousNetworkSnapshot;
+  const sampledAt = Date.now();
+  const elapsedSeconds = previousNetworkSampledAt ? Math.max((sampledAt - previousNetworkSampledAt) / 1000, 1) : 1;
   previousNetworkSnapshot = interfaces.map((entry) => ({ name: entry.name, rx: entry.rx, tx: entry.tx, errors: entry.errors }));
+  previousNetworkSampledAt = sampledAt;
 
   const totals = interfaces.reduce((sum, entry) => ({
     rx: sum.rx + entry.rx,
@@ -107,10 +114,17 @@ function readNetworkMetrics() {
     errors: sum.errors + entry.errors
   }), { rx: 0, tx: 0, errors: 0 });
 
+  const download = previousTotals ? Math.round(Math.max(0, totals.rx - previousTotals.rx) / elapsedSeconds) : 0;
+  const upload = previousTotals ? Math.round(Math.max(0, totals.tx - previousTotals.tx) / elapsedSeconds) : 0;
+  networkDownloadHistory.push(download);
+  networkUploadHistory.push(upload);
+  if (networkDownloadHistory.length > NETWORK_HISTORY_LIMIT) networkDownloadHistory.shift();
+  if (networkUploadHistory.length > NETWORK_HISTORY_LIMIT) networkUploadHistory.shift();
+
   return {
     interfaces,
-    download: previousTotals ? Math.max(0, totals.rx - previousTotals.rx) : 0,
-    upload: previousTotals ? Math.max(0, totals.tx - previousTotals.tx) : 0,
+    download,
+    upload,
     errors: totals.errors
   };
 }
@@ -228,12 +242,18 @@ export const systemMetricsController = {
         uptimeSeconds,
         memoryMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
         loadAverage,
-        platform: `${os.platform()} ${os.release()}`
+        platform: `${os.platform()} ${os.release()}`,
+        hostname: os.hostname(),
+        kernelVersion: os.release(),
+        architecture: os.arch()
       },
       health: {
         status: healthStatus,
         issues: healthIssues,
-        score: healthScore
+        score: healthScore,
+        recommendations: healthIssues.length
+          ? ['Review the highlighted resource pressure and scale or tune the affected service.']
+          : ['System metrics are within normal operating ranges.']
       },
       system: {
         cpu: {
@@ -255,23 +275,68 @@ export const systemMetricsController = {
           swapTotal: 0,
           swapUsed: 0,
           swapFree: 0,
+          swapUsage: 0,
           buffered: 0,
-          cached: 0
+          buffers: 0,
+          cached: 0,
+          shared: 0,
+          available: freeMemoryMb
         },
         storage: {
           ...storage,
-          disks: [{ name: 'root', total: storage.total, used: storage.used, free: storage.free, usage: storage.usage }]
+          disks: [{
+            name: 'root',
+            total: storage.total,
+            used: storage.used,
+            free: storage.free,
+            usage: storage.usage,
+            type: 'filesystem',
+            mount: process.cwd(),
+            readSpeed: 0,
+            writeSpeed: 0
+          }],
+          iops: { read: 0, write: 0 }
         },
         network: {
           download: network.download,
           upload: network.upload,
           latency: Math.round(elapsedMs),
+          packets: {
+            received: network.interfaces.reduce((sum, item) => sum + item.rx, 0),
+            sent: network.interfaces.reduce((sum, item) => sum + item.tx, 0),
+            dropped: 0
+          },
           packetsIn: network.interfaces.reduce((sum, item) => sum + item.rx, 0),
           packetsOut: network.interfaces.reduce((sum, item) => sum + item.tx, 0),
           errors: network.errors,
-          interfaces: network.interfaces
+          interfaces: network.interfaces.map((entry) => ({
+            ...entry,
+            mac: '',
+            speed: 0,
+            status: 'up'
+          })),
+          connections: { tcp: 0, udp: 0, total: 0 },
+          speed: {
+            download: network.download,
+            upload: network.upload,
+            latency: Math.round(elapsedMs),
+            timestamp: new Date().toISOString(),
+            downloadHistory: networkDownloadHistory,
+            uploadHistory: networkUploadHistory
+          }
         },
-        database,
+        database: {
+          size: database.size,
+          connections: database.connections,
+          queriesPerSecond: database.queriesPerSecond,
+          slowQueries: database.slowQueries,
+          hitRatio: database.hitRatio,
+          transactionsPerSecond: 0,
+          replicationLag: 0,
+          bufferHitRatio: database.hitRatio,
+          tableCount: 0,
+          indexCount: 0
+        },
         uptime: uptimeSeconds,
         loadAverage,
         timestamp: new Date().toISOString(),

@@ -15,26 +15,21 @@ import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
+import type { TeacherNotification as BaseTeacherNotification } from '../../../types/teacher';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
-interface TeacherNotification {
-  id: string;
-  title: string;
-  message: string;
+type TeacherNotification = Omit<BaseTeacherNotification, 'type' | 'priority'> & {
   type: 'announcement' | 'message' | 'meeting' | 'exam' | 'attendance' | 'discipline' | 'academic' | 'system';
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  isRead: boolean;
   isArchived: boolean;
   isStarred: boolean;
-  actionUrl?: string;
   actionLabel?: string;
   senderId?: string;
   senderName?: string;
   senderRole?: string;
   metadata?: Record<string, any>;
-  createdAt: string;
-  readAt?: string;
   expiresAt?: string;
-}
+};
 
 interface NotificationPreferences {
   email: boolean;
@@ -373,13 +368,10 @@ const TeacherNotificationsPage: React.FC = () => {
         startDate: dateFilter.startDate || undefined,
         endDate: dateFilter.endDate || undefined,
       });
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `notifications_${new Date().toISOString().split('T')[0]}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(
+        response.data,
+        `notifications_${new Date().toISOString().split('T')[0]}.${format}`
+      );
       toast.success(`Exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);
@@ -1021,7 +1013,7 @@ const TeacherNotificationsPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

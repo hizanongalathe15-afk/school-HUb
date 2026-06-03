@@ -9,6 +9,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  /** Alias for leftIcon used by legacy components */
+  icon?: React.ReactNode;
+  /** Render as a different element (e.g. label for file inputs) */
+  as?: React.ElementType;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -18,13 +22,16 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   leftIcon,
   rightIcon,
+  icon,
+  as: Component = 'button',
   children,
   className,
   disabled,
   type = 'button',
   ...props
 }) => {
-  const isIconOnly = !children && (leftIcon || rightIcon || isLoading);
+  const resolvedLeftIcon = leftIcon ?? icon;
+  const isIconOnly = !children && (resolvedLeftIcon || rightIcon || isLoading);
   
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900';
   
@@ -55,8 +62,8 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <button
-      type={type}
+    <Component
+      type={Component === 'button' ? type : undefined}
       className={clsx(
         baseClasses,
         variantClasses[variant],
@@ -80,9 +87,9 @@ export const Button: React.FC<ButtonProps> = ({
           )} 
           aria-hidden="true" 
         />
-      ) : leftIcon ? (
+      ) : resolvedLeftIcon ? (
         <span className={clsx(iconSpacing[size], iconSizeClasses[size])}>
-          {leftIcon}
+          {resolvedLeftIcon}
         </span>
       ) : null}
       
@@ -93,6 +100,6 @@ export const Button: React.FC<ButtonProps> = ({
           {rightIcon}
         </span>
       )}
-    </button>
+    </Component>
   );
 };

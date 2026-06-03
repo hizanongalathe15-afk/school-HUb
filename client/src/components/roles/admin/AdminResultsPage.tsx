@@ -352,7 +352,7 @@ export default function AdminResultsPage() {
             <button onClick={() => setShowBulkEdit(true)} className="btn-sm">
               <Edit size={14} /> Adjust Scores
             </button>
-            <button onClick={exportResults} className="btn-sm">
+            <button onClick={() => exportResults('excel')} className="btn-sm">
               <Download size={14} /> Export
             </button>
             <button onClick={bulkDelete} className="btn-sm danger">

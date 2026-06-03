@@ -240,7 +240,7 @@ const BursarAnalyticsPage: React.FC = () => {
 export default BursarAnalyticsPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

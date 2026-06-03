@@ -288,7 +288,7 @@ const BursarBulkOperationsPage: React.FC = () => {
               ))}
               {operations.length === 0 && (
                 <tr>
-                  <td colspan="7" className="px-6 py-4 text-center text-amber-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-amber-500">
                     No bulk operations found
                   </td>
                 </tr>
@@ -449,7 +449,7 @@ const BursarBulkOperationsPage: React.FC = () => {
 export default BursarBulkOperationsPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

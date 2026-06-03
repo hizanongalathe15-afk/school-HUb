@@ -42,6 +42,16 @@ export default function AdminFinanceDashboardPage() {
 
   useEffect(() => { fetchData(); }, [period]);
 
+  const getCollectionAmount = (method: 'mpesa' | 'cash' | 'bank') => {
+    const rows = metrics?.collectionMethods;
+    if (!rows) return 0;
+    if (Array.isArray(rows)) {
+      const match = rows.find((row) => row.method?.toLowerCase().includes(method === 'bank' ? 'bank' : method));
+      return match?.amount ?? match?.[method] ?? 0;
+    }
+    return (rows as Record<string, number>)[method] ?? 0;
+  };
+
   const financeMetrics: FinanceMetric[] = [
     {
       id: 'total_collected',
@@ -182,15 +192,18 @@ export default function AdminFinanceDashboardPage() {
               {selectedChart === 'revenue' && metrics?.revenueData && (
                 <div className="revenue-chart">
                   <div className="chart-bars">
-                    {metrics.revenueData.map((item, index) => (
+                    {metrics.revenueData.map((item, index) => {
+                      const amount = item.amount ?? item.value ?? 0;
+                      const maxAmount = Math.max(...metrics.revenueData!.map((d) => d.amount ?? d.value ?? 0), 1);
+                      return (
                       <div key={index} className="chart-bar-item">
                         <div className="bar-container">
-                          <div className="bar" style={{ height: `${(item.amount / Math.max(...metrics.revenueData.map(d => d.amount))) * 100}%` }} />
+                          <div className="bar" style={{ height: `${(amount / maxAmount) * 100}%` }} />
                         </div>
-                        <span className="bar-label">{item.month}</span>
-                        <span className="bar-value">{formatCurrency(item.amount)}</span>
+                        <span className="bar-label">{item.month ?? item.name}</span>
+                        <span className="bar-value">{formatCurrency(amount)}</span>
                       </div>
-                    ))}
+                    );})}
                   </div>
                 </div>
               )}
@@ -203,12 +216,12 @@ export default function AdminFinanceDashboardPage() {
                       <div key={index} className="expense-item">
                         <div className="expense-header">
                           <span>{category.category}</span>
-                          <span>{formatCurrency(category.amount)}</span>
+                          <span>{formatCurrency(category.amount ?? category.value ?? 0)}</span>
                         </div>
                         <div className="expense-bar">
-                          <div className="bar-fill" style={{ width: `${(category.amount / metrics.totalExpenses) * 100}%` }} />
+                          <div className="bar-fill" style={{ width: `${(((category.amount ?? category.value ?? 0) / (metrics.totalExpenses || 1)) * 100)}%` }} />
                         </div>
-                        <span className="expense-percent">{((category.amount / metrics.totalExpenses) * 100).toFixed(1)}%</span>
+                        <span className="expense-percent">{(((category.amount ?? category.value ?? 0) / (metrics.totalExpenses || 1)) * 100).toFixed(1)}%</span>
                       </div>
                     ))}
                   </div>
@@ -221,21 +234,21 @@ export default function AdminFinanceDashboardPage() {
                   <div className="methods-grid">
                     <div className="method-card mpesa">
                       <Smartphone size={32} />
-                      <div className="method-amount">{formatCurrency(metrics.collectionMethods.mpesa)}</div>
+                      <div className="method-amount">{formatCurrency(getCollectionAmount('mpesa'))}</div>
                       <div className="method-label">M-Pesa</div>
-                      <div className="method-percent">{((metrics.collectionMethods.mpesa / metrics.totalCollected) * 100).toFixed(1)}%</div>
+                      <div className="method-percent">{((getCollectionAmount('mpesa') / (metrics.totalCollected || 1)) * 100).toFixed(1)}%</div>
                     </div>
                     <div className="method-card cash">
                       <Banknote size={32} />
-                      <div className="method-amount">{formatCurrency(metrics.collectionMethods.cash)}</div>
+                      <div className="method-amount">{formatCurrency(getCollectionAmount('cash'))}</div>
                       <div className="method-label">Cash</div>
-                      <div className="method-percent">{((metrics.collectionMethods.cash / metrics.totalCollected) * 100).toFixed(1)}%</div>
+                      <div className="method-percent">{((getCollectionAmount('cash') / (metrics.totalCollected || 1)) * 100).toFixed(1)}%</div>
                     </div>
                     <div className="method-card bank">
                       <Building2 size={32} />
-                      <div className="method-amount">{formatCurrency(metrics.collectionMethods.bank)}</div>
+                      <div className="method-amount">{formatCurrency(getCollectionAmount('bank'))}</div>
                       <div className="method-label">Bank Transfer</div>
-                      <div className="method-percent">{((metrics.collectionMethods.bank / metrics.totalCollected) * 100).toFixed(1)}%</div>
+                      <div className="method-percent">{((getCollectionAmount('bank') / (metrics.totalCollected || 1)) * 100).toFixed(1)}%</div>
                     </div>
                   </div>
                 </div>

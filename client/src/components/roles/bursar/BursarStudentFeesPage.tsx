@@ -439,7 +439,7 @@ const BursarStudentFeesPage: React.FC = () => {
 export default BursarStudentFeesPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

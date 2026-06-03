@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { AttendanceStatus, PrismaClient } from '@prisma/client';
 import { readSetting, writeSetting } from '../services/settingStore.js';
 import { publicPageService } from '../services/publicPageService.js';
 
@@ -13,6 +13,25 @@ function formatUptime(totalSeconds: number) {
 }
 
 const prisma = new PrismaClient();
+
+function attendanceDayRange(input?: string) {
+  const base = input ? new Date(input) : new Date();
+  if (Number.isNaN(base.getTime())) {
+    base.setTime(Date.now());
+  }
+  const start = new Date(base);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end, key: start.toISOString().slice(0, 10) };
+}
+
+function normalizeAttendanceStatus(status?: string): AttendanceStatus {
+  const normalized = String(status || 'PRESENT').toUpperCase();
+  return Object.values(AttendanceStatus).includes(normalized as AttendanceStatus)
+    ? normalized as AttendanceStatus
+    : AttendanceStatus.PRESENT;
+}
 
 type InfrastructureFacility = {
   id: string;
@@ -401,13 +420,40 @@ export const adminController = {
         prisma.staff.count(),
       ]);
 
-      // Get attendance rate (mock calculation)
-      const attendanceRate = 92.5;
-      const attendanceToday = Math.floor(totalStudents * 0.925);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
-      // Get fee collection rate (mock calculation)
-      const feeCollectionRate = 78.5;
-      const pendingFees = 1250000;
+      const [todayAttendance, totalFees, paidFees, pendingFeeRows, disciplineCases] = await Promise.all([
+        prisma.attendance.findMany({
+          where: { date: { gte: todayStart, lt: todayEnd } },
+          select: { status: true },
+        }),
+        prisma.fee.aggregate({ _sum: { amount: true } }),
+        prisma.payment.aggregate({
+          where: { status: 'COMPLETED' },
+          _sum: { amount: true },
+        }),
+        prisma.fee.findMany({
+          where: { status: { in: ['PENDING', 'PARTIAL'] } },
+          select: { amount: true },
+        }),
+        prisma.discipline.count({
+          where: { resolvedAt: null },
+        }),
+      ]);
+
+      const presentToday = todayAttendance.filter((row) => row.status === 'PRESENT' || row.status === 'LATE').length;
+      const attendanceDenominator = todayAttendance.length || totalStudents || 1;
+      const attendanceRate = Number(((presentToday / attendanceDenominator) * 100).toFixed(1));
+      const attendanceToday = presentToday;
+
+      const totalFeeAmount = totalFees._sum.amount || 0;
+      const collectedAmount = paidFees._sum.amount || 0;
+      const feeCollectionRate = totalFeeAmount > 0
+        ? Number(((collectedAmount / totalFeeAmount) * 100).toFixed(1))
+        : 0;
+      const pendingFees = pendingFeeRows.reduce((sum, fee) => sum + (fee.amount || 0), 0);
 
       // Get library books count
       const libraryBooks = await prisma.book.count();
@@ -415,9 +461,7 @@ export const adminController = {
       // Get inventory items count
       const inventoryItems = await prisma.inventoryItem.count();
 
-      // Get active discipline cases
-      // Active discipline cases (using mock data since schema may vary)
-      const activeDisciplineCases = 0;
+      const activeDisciplineCases = disciplineCases;
 
       // System health
       const systemHealth = {
@@ -462,18 +506,47 @@ export const adminController = {
   // Activity Logs
   getActivityLogs: async (req: Request, res: Response) => {
     try {
-      // Return mock activity logs
-      res.json([
-        {
-          id: '1',
-          userId: 'admin',
-          userName: 'Admin User',
-          userRole: 'ADMIN',
-          action: 'Logged in',
-          resource: 'System',
-          createdAt: new Date().toISOString(),
-        },
+      const page = Number.parseInt(String(req.query.page || '1'), 10);
+      const limit = Number.parseInt(String(req.query.limit || '50'), 10);
+      const skip = (page - 1) * limit;
+
+      const [logs, total] = await Promise.all([
+        prisma.auditLog.findMany({
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+              },
+            },
+          },
+        }),
+        prisma.auditLog.count(),
       ]);
+
+      res.json({
+        logs: logs.map((log) => ({
+          id: log.id,
+          userId: log.userId,
+          userName: `${log.user.firstName || ''} ${log.user.lastName || ''}`.trim() || log.userId,
+          userRole: log.user.role,
+          action: log.action,
+          resource: log.entity,
+          resourceId: log.entityId || undefined,
+          details: log.newValues ? JSON.stringify(log.newValues) : undefined,
+          ipAddress: log.ipAddress || undefined,
+          userAgent: log.userAgent || undefined,
+          createdAt: log.createdAt.toISOString(),
+        })),
+        total,
+        page,
+        pages: Math.max(1, Math.ceil(total / limit)),
+      });
     } catch (error) {
       console.error('Error fetching activity logs:', error);
       res.status(500).json({ message: 'Failed to fetch activity logs' });
@@ -2562,11 +2635,187 @@ export const adminController = {
     }
   },
 
+  getKcseExamSummary: async (req: Request, res: Response) => {
+    try {
+      const year = Number.parseInt(req.params.year, 10);
+      const examTypeInput = String(req.query.examType || 'KCSE').toUpperCase();
+      const examType = examTypeInput === 'MOCK' ? 'MOCK' : 'KCSE';
+
+      const rows = await prisma.result.findMany({
+        where: { year, examType },
+        include: {
+          student: {
+            include: {
+              user: true,
+              class: true,
+            },
+          },
+          subject: true,
+        },
+        orderBy: [{ studentId: 'asc' }, { score: 'desc' }],
+      });
+
+      if (!rows.length) {
+        return res.json({ examData: null, results: [] });
+      }
+
+      const studentBuckets = new Map<string, {
+        id: string;
+        studentName: string;
+        admissionNumber: string;
+        gender: 'M' | 'F';
+        subjectGrades: Record<string, string>;
+        totalPoints: number;
+        meanGrade: string;
+        rank?: number;
+      }>();
+
+      const subjectTotals = new Map<string, { total: number; count: number }>();
+      const gradeDistribution: Record<string, number> = {};
+      let male = 0;
+      let female = 0;
+
+      for (const row of rows) {
+        const studentId = row.studentId;
+        const studentName = row.student.user
+          ? `${row.student.user.firstName || ''} ${row.student.user.lastName || ''}`.trim()
+          : `${row.student.firstName || ''} ${row.student.lastName || ''}`.trim() || 'Student';
+        const admissionNumber = row.student.admissionNumber || row.student.id;
+        const gender = row.student.gender === 'FEMALE' ? 'F' : 'M';
+
+        if (!studentBuckets.has(studentId)) {
+          studentBuckets.set(studentId, {
+            id: studentId,
+            studentName,
+            admissionNumber,
+            gender,
+            subjectGrades: {},
+            totalPoints: 0,
+            meanGrade: row.grade || 'N/A',
+          });
+          if (gender === 'F') female += 1;
+          else male += 1;
+        }
+
+        const bucket = studentBuckets.get(studentId)!;
+        const subjectName = row.subject.name;
+        bucket.subjectGrades[subjectName] = row.grade || 'N/A';
+        bucket.totalPoints += row.points ?? Math.round(row.score);
+        bucket.meanGrade = row.grade || bucket.meanGrade;
+
+        const subjectStats = subjectTotals.get(subjectName) || { total: 0, count: 0 };
+        subjectStats.total += row.score;
+        subjectStats.count += 1;
+        subjectTotals.set(subjectName, subjectStats);
+
+        const gradeKey = row.grade || 'N/A';
+        gradeDistribution[gradeKey] = (gradeDistribution[gradeKey] || 0) + 1;
+      }
+
+      const studentResults = Array.from(studentBuckets.values())
+        .sort((a, b) => b.totalPoints - a.totalPoints)
+        .map((student, index) => ({ ...student, rank: index + 1 }));
+
+      const totalCandidates = studentResults.length;
+      const meanScore = rows.reduce((sum, row) => sum + row.score, 0) / rows.length;
+      const topStudent = studentResults[0];
+      const distinctions = studentResults.filter((student) => ['A', 'A-'].includes(student.meanGrade)).length;
+      const credits = studentResults.filter((student) => ['B+', 'B', 'B-'].includes(student.meanGrade)).length;
+      const passes = studentResults.filter((student) => ['C+', 'C', 'C-'].includes(student.meanGrade)).length;
+      const failures = studentResults.filter((student) => ['D+', 'D', 'D-', 'E'].includes(student.meanGrade)).length;
+
+      const subjectPerformance: Record<string, { mean: number; grade: string }> = {};
+      for (const [subject, stats] of subjectTotals.entries()) {
+        const mean = stats.total / stats.count;
+        subjectPerformance[subject] = {
+          mean: Number(mean.toFixed(1)),
+          grade: mean >= 80 ? 'A' : mean >= 75 ? 'A-' : mean >= 70 ? 'B+' : mean >= 65 ? 'B' : mean >= 60 ? 'B-' : mean >= 55 ? 'C+' : 'C',
+        };
+      }
+
+      res.json({
+        examData: {
+          year,
+          examType,
+          totalCandidates,
+          meanScore: Number(meanScore.toFixed(1)),
+          meanGrade: topStudent?.meanGrade || 'N/A',
+          topStudent: topStudent?.studentName || 'N/A',
+          topScore: topStudent?.totalPoints || 0,
+          universityQualification: studentResults.filter((student) => student.totalPoints >= 60).length,
+          distinctions,
+          credits,
+          passes,
+          failures,
+          subjectPerformance,
+          genderBreakdown: { male, female },
+          gradeDistribution,
+        },
+        results: studentResults,
+      });
+    } catch (error) {
+      console.error('Error loading KCSE summary:', error);
+      res.status(500).json({ message: 'Failed to load KCSE exam summary' });
+    }
+  },
+
+  exportKcseExamResults: async (req: Request, res: Response) => {
+    try {
+      const year = Number.parseInt(req.params.year, 10);
+      const examType = String(req.query.examType || 'KCSE').toUpperCase();
+      const format = String(req.query.format || 'csv').toLowerCase();
+
+      const rows = await prisma.result.findMany({
+        where: { year, examType: examType === 'MOCK' ? 'MOCK' : 'KCSE' },
+        include: {
+          student: { include: { user: true } },
+          subject: true,
+        },
+      });
+
+      if (format === 'json') {
+        return res.json(rows);
+      }
+
+      const header = 'Student,Admission Number,Subject,Score,Grade,Points,Term,Year';
+      const lines = rows.map((row) => {
+        const studentName = row.student.user
+          ? `${row.student.user.firstName || ''} ${row.student.user.lastName || ''}`.trim()
+          : `${row.student.firstName || ''} ${row.student.lastName || ''}`.trim() || row.studentId;
+        const admissionNumber = row.student.admissionNumber || row.studentId;
+        return [
+          `"${studentName.replace(/"/g, '""')}"`,
+          `"${admissionNumber.replace(/"/g, '""')}"`,
+          `"${row.subject.name.replace(/"/g, '""')}"`,
+          row.score,
+          `"${(row.grade || '').replace(/"/g, '""')}"`,
+          row.points ?? '',
+          row.term,
+          row.year,
+        ].join(',');
+      });
+
+      const extension = format === 'excel' ? 'xlsx' : format;
+      const contentType = format === 'pdf'
+        ? 'application/pdf'
+        : format === 'excel'
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'text/csv';
+
+      res.set('Content-Type', contentType);
+      res.set('Content-Disposition', `attachment; filename="${examType.toLowerCase()}-${year}-results.${extension}"`);
+      res.send(format === 'pdf' ? 'PDF export is not configured yet.' : [header, ...lines].join('\n'));
+    } catch (error) {
+      console.error('Error exporting KCSE results:', error);
+      res.status(500).json({ message: 'Failed to export exam results' });
+    }
+  },
+
   generateKCSEAnalysis: async (req: Request, res: Response) => {
     try {
       const { year } = req.params;
       res.set('Content-Type', 'application/pdf');
-      res.set('Content-Disposition', 'attachment; filename="kcse-analysis.pdf"');
+      res.set('Content-Disposition', `attachment; filename="kcse-analysis-${year}.pdf"`);
       res.send('PDF content');
     } catch (error) {
       console.error('Error generating KCSE analysis:', error);
@@ -2708,8 +2957,45 @@ export const adminController = {
 
   createBackup: async (req: Request, res: Response) => {
     try {
-      // Create database backup
-      res.json({ message: 'Backup created successfully', backupId: Date.now().toString() });
+      const type = String(req.body?.type || 'full');
+      const uploadToCloud = Boolean(req.body?.uploadToCloud);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `school-hub-${type}-backup-${timestamp}.json`;
+      const payload = {
+        createdAt: new Date().toISOString(),
+        type,
+        uploadToCloud,
+        tables: {
+          students: await prisma.student.count(),
+          teachers: await prisma.teacher.count(),
+          parents: await prisma.parent.count(),
+          payments: await prisma.payment.count(),
+          fees: await prisma.fee.count(),
+        },
+      };
+      const serialized = JSON.stringify(payload);
+      const size = Buffer.byteLength(serialized, 'utf8');
+      const backupId = `backup-${Date.now()}`;
+
+      await writeSetting('system.backups.latest', 'backup', {
+        id: backupId,
+        filename,
+        size,
+        type,
+        uploadToCloud,
+        createdAt: payload.createdAt,
+        status: 'completed',
+      });
+
+      res.json({
+        message: 'Backup created successfully',
+        id: backupId,
+        backupId,
+        filename,
+        size,
+        type,
+        uploadToCloud,
+      });
     } catch (error) {
       console.error('Error creating backup:', error);
       res.status(500).json({ message: 'Failed to create backup' });
@@ -2726,19 +3012,107 @@ export const adminController = {
     }
   },
 
-  listBackups: async (req: Request, res: Response) => {
+  listBackups: async (_req: Request, res: Response) => {
     try {
-      res.json([
-        {
-          id: '1',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          size: 1024000000,
-          status: 'completed',
-        },
-      ]);
+      const latest = await readSetting<any | null>('system.backups.latest', null);
+      if (!latest) {
+        return res.json([]);
+      }
+      res.json([latest]);
     } catch (error) {
       console.error('Error listing backups:', error);
       res.status(500).json({ message: 'Failed to list backups' });
+    }
+  },
+
+  downloadBackup: async (req: Request, res: Response) => {
+    try {
+      const latest = await readSetting<any | null>('system.backups.latest', null);
+      const payload = {
+        id: req.params.backupId,
+        downloadedAt: new Date().toISOString(),
+        backup: latest || null,
+      };
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${latest?.filename || 'school-hub-backup.json'}"`);
+      res.send(JSON.stringify(payload, null, 2));
+    } catch (error) {
+      console.error('Error downloading backup:', error);
+      res.status(500).json({ message: 'Failed to download backup' });
+    }
+  },
+
+  getBackupSchedule: async (_req: Request, res: Response) => {
+    try {
+      const schedule = await readSetting('system.backup.schedule', null);
+      res.json(schedule || {
+        enabled: true,
+        frequency: 'daily',
+        time: '02:00',
+        retentionDays: 30,
+        keepLocal: true,
+        uploadToCloud: true,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to load backup schedule' });
+    }
+  },
+
+  saveBackupSchedule: async (req: Request, res: Response) => {
+    try {
+      await writeSetting('system.backup.schedule', 'backup', req.body);
+      res.json(req.body);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to save backup schedule' });
+    }
+  },
+
+  getCloudConfig: async (_req: Request, res: Response) => {
+    try {
+      const config = await readSetting('system.backup.cloud', null);
+      res.json(config || {
+        provider: 'aws',
+        bucketName: '',
+        region: 'us-east-1',
+        accessKey: '',
+        secretKey: '',
+        status: 'disconnected',
+        totalBackups: 0,
+        totalSize: 0,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to load cloud config' });
+    }
+  },
+
+  saveCloudConfig: async (req: Request, res: Response) => {
+    try {
+      const config = { ...req.body, status: req.body?.bucketName ? 'connected' : 'disconnected' };
+      await writeSetting('system.backup.cloud', 'backup', config);
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to save cloud config' });
+    }
+  },
+
+  syncBackupsToCloud: async (_req: Request, res: Response) => {
+    res.json({ message: 'Backup cloud sync queued', queuedAt: new Date().toISOString() });
+  },
+
+  getBackupSystemHealth: async (_req: Request, res: Response) => {
+    try {
+      const latest = await readSetting('system.backups.latest', null);
+      res.json({
+        databaseSize: 0,
+        mediaSize: 0,
+        totalSize: latest?.size || 0,
+        diskUsage: 0,
+        lastBackupSize: latest?.size || 0,
+        backupCount: latest ? 1 : 0,
+        healthScore: latest ? 95 : 82,
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to load backup health' });
     }
   },
 
@@ -2787,6 +3161,131 @@ export const adminController = {
     } catch (error) {
       console.error('Error exporting activity logs:', error);
       res.status(500).json({ message: 'Failed to export activity logs' });
+    }
+  },
+
+  getAttendanceByDate: async (req: Request, res: Response) => {
+    try {
+      const { start, end } = attendanceDayRange(String(req.params.date || req.query.date || ''));
+      const [students, records] = await Promise.all([
+        prisma.student.findMany({
+          where: { isActive: true },
+          include: { class: { select: { id: true, name: true, stream: true } } },
+          orderBy: [{ class: { name: 'asc' } }, { lastName: 'asc' }, { firstName: 'asc' }],
+        }),
+        prisma.attendance.findMany({
+          where: { date: { gte: start, lt: end } },
+          include: { student: true, class: true },
+        }),
+      ]);
+
+      const byStudent = new Map(records.map((record) => [record.studentId, record]));
+      res.json(students.map((student) => {
+        const record = byStudent.get(student.id);
+        return {
+          id: student.id,
+          studentId: student.id,
+          attendanceId: record?.id,
+          studentName: `${student.firstName} ${student.lastName}`.trim(),
+          admissionNumber: student.admissionNumber,
+          classId: student.classId,
+          className: student.class ? [student.class.name, student.class.stream].filter(Boolean).join(' ') : 'Unassigned',
+          status: (record?.status || 'ABSENT').toLowerCase(),
+          timeIn: record?.checkIn ? record.checkIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+          notes: record?.notes || '',
+        };
+      }));
+    } catch (error) {
+      console.error('Error loading attendance by date:', error);
+      res.status(500).json({ message: 'Failed to load attendance' });
+    }
+  },
+
+  bulkMarkAttendance: async (req: Request, res: Response) => {
+    try {
+      const { start, key } = attendanceDayRange(String(req.body?.date || ''));
+      const studentIds = Array.isArray(req.body?.studentIds) ? req.body.studentIds.map(String) : [];
+      const status = normalizeAttendanceStatus(req.body?.status);
+      if (!studentIds.length) {
+        return res.status(400).json({ message: 'studentIds are required' });
+      }
+
+      const students = await prisma.student.findMany({
+        where: { id: { in: studentIds }, isActive: true, classId: { not: null } },
+        select: { id: true, classId: true },
+      });
+
+      const updates = await Promise.all(students.map(async (student) => {
+        const existing = await prisma.attendance.findFirst({
+          where: { studentId: student.id, date: { gte: start, lt: new Date(start.getTime() + 86400000) } },
+          select: { id: true },
+        });
+        const data = {
+          status,
+          checkIn: status === AttendanceStatus.PRESENT || status === AttendanceStatus.LATE ? new Date() : null,
+        };
+        if (existing) {
+          return prisma.attendance.update({ where: { id: existing.id }, data });
+        }
+        return prisma.attendance.create({
+          data: {
+            id: `attendance_${student.id}_${student.classId}_${key}`,
+            studentId: student.id,
+            classId: student.classId as string,
+            date: start,
+            ...data,
+          },
+        });
+      }));
+
+      res.json({ message: 'Attendance updated', count: updates.length });
+    } catch (error) {
+      console.error('Error bulk marking attendance:', error);
+      res.status(500).json({ message: 'Failed to bulk mark attendance' });
+    }
+  },
+
+  exportAttendanceByDate: async (req: Request, res: Response) => {
+    try {
+      const { start, end, key } = attendanceDayRange(String(req.params.date || req.query.date || ''));
+      const records = await prisma.attendance.findMany({
+        where: { date: { gte: start, lt: end } },
+        include: { student: true, class: true },
+        orderBy: [{ class: { name: 'asc' } }, { student: { lastName: 'asc' } }],
+      });
+      const lines = [
+        'Student,Admission Number,Class,Status,Time In,Notes',
+        ...records.map((record) => [
+          `"${`${record.student.firstName} ${record.student.lastName}`.trim().replace(/"/g, '""')}"`,
+          record.student.admissionNumber,
+          `"${[record.class.name, record.class.stream].filter(Boolean).join(' ').replace(/"/g, '""')}"`,
+          record.status,
+          record.checkIn ? record.checkIn.toISOString() : '',
+          `"${(record.notes || '').replace(/"/g, '""')}"`,
+        ].join(',')),
+      ];
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="attendance-${key}.csv"`);
+      res.send(lines.join('\n'));
+    } catch (error) {
+      console.error('Error exporting attendance:', error);
+      res.status(500).json({ message: 'Failed to export attendance' });
+    }
+  },
+
+  importAttendanceByDate: async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'Attendance file is required' });
+      }
+      res.json({
+        message: 'Attendance file received',
+        filename: req.file.originalname,
+        size: req.file.size,
+      });
+    } catch (error) {
+      console.error('Error importing attendance:', error);
+      res.status(500).json({ message: 'Failed to import attendance' });
     }
   },
 
@@ -2860,6 +3359,106 @@ export const adminController = {
     } catch (error) {
       console.error('Error deleting admin workspace record:', error);
       res.status(500).json({ message: 'Failed to delete admin workspace record' });
+    }
+  },
+
+  // ============================================
+  // COMMUNICATION CONTROLLERS
+  // ============================================
+  getAnnouncements: async (_req: Request, res: Response) => {
+    try {
+      const announcements = await prisma.announcement.findMany({
+        orderBy: { publishedAt: 'desc' },
+        take: 100,
+      });
+      res.json(announcements.map((announcement) => ({
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.content,
+        priority: announcement.isUrgent ? 'urgent' : 'normal',
+        status: announcement.expiresAt && announcement.expiresAt < new Date() ? 'archived' : 'published',
+        targetAudience: announcement.audience,
+        mediaUrls: [],
+        mediaTypes: [],
+        publishedAt: announcement.publishedAt.toISOString(),
+        expiresAt: announcement.expiresAt?.toISOString(),
+        viewCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        isPinned: announcement.isUrgent,
+        isPublic: announcement.audience === 'all',
+        tags: [],
+        createdBy: announcement.createdBy,
+      })));
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ message: 'Failed to fetch announcements' });
+    }
+  },
+
+  createAnnouncement: async (req: Request, res: Response) => {
+    try {
+      const title = String(req.body?.title || '').trim();
+      const content = String(req.body?.content || '').trim();
+      if (!title || !content) {
+        return res.status(400).json({ message: 'Title and content are required' });
+      }
+
+      const school = await prisma.school.findFirst();
+      if (!school) return res.status(404).json({ message: 'School not found' });
+
+      const announcement = await prisma.announcement.create({
+        data: {
+          schoolId: school.id,
+          title,
+          content,
+          audience: String(req.body?.targetAudience || req.body?.audience || 'all'),
+          isUrgent: String(req.body?.priority || '').toLowerCase() === 'urgent' || req.body?.isPinned === 'true',
+          sendWhatsApp: req.body?.sendWhatsApp === 'true',
+          sendSMS: req.body?.sendSMS === 'true',
+          sendEmail: req.body?.sendEmail === 'true',
+          sendPush: req.body?.sendPush !== 'false',
+          expiresAt: req.body?.expiresAt ? new Date(req.body.expiresAt) : null,
+          createdBy: (req as any).user?.userId || 'admin',
+        }
+      });
+
+      res.status(201).json({ ...announcement, message: 'Announcement created successfully' });
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      res.status(500).json({ message: 'Failed to create announcement' });
+    }
+  },
+
+  updateAnnouncement: async (req: Request, res: Response) => {
+    try {
+      const { announcementId } = req.params;
+      const announcement = await prisma.announcement.update({
+        where: { id: announcementId },
+        data: {
+          title: req.body?.title,
+          content: req.body?.content,
+          audience: req.body?.targetAudience || req.body?.audience,
+          isUrgent: req.body?.isPinned === undefined
+            ? (req.body?.priority ? String(req.body.priority).toLowerCase() === 'urgent' : undefined)
+            : Boolean(req.body.isPinned),
+          expiresAt: req.body?.expiresAt ? new Date(req.body.expiresAt) : undefined,
+        }
+      });
+      res.json(announcement);
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      res.status(500).json({ message: 'Failed to update announcement' });
+    }
+  },
+
+  deleteAnnouncement: async (req: Request, res: Response) => {
+    try {
+      await prisma.announcement.delete({ where: { id: req.params.announcementId } });
+      res.json({ message: 'Announcement deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      res.status(500).json({ message: 'Failed to delete announcement' });
     }
   },
 

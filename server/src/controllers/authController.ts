@@ -122,21 +122,25 @@ export const authController = {
         userAgent: req.get('user-agent'),
         ip: req.ip
       });
-      await authSessionService.enrichUserSessions(user.id, {
-        email: user.email,
-        accountName: `${user.firstName} ${user.lastName}`
-      });
-      await notificationService.createWelcome(user.id);
-      await notificationService.create(user.id, {
-        title: 'New account login detected',
-        message: `${req.get('user-agent') || 'Unknown device'} signed in from ${req.ip}. If this was not you, open Active Devices and log it out.`,
-        link: sessionSecurityLink(user.role),
-        type: NotificationType.EMERGENCY
-      });
-
       await prisma.user.update({
         where: { id: user.id },
         data: { lastLogin: new Date() },
+      });
+
+      void Promise.allSettled([
+        authSessionService.enrichUserSessions(user.id, {
+          email: user.email,
+          accountName: `${user.firstName} ${user.lastName}`
+        }),
+        notificationService.createWelcome(user.id),
+        notificationService.create(user.id, {
+          title: 'New account login detected',
+          message: `${req.get('user-agent') || 'Unknown device'} signed in from ${req.ip}. If this was not you, open Active Devices and log it out.`,
+          link: sessionSecurityLink(user.role),
+          type: NotificationType.EMERGENCY
+        })
+      ]).catch((backgroundError) => {
+        console.error('Post-login background task failed:', backgroundError);
       });
 
       res.json({

@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   CheckCircle2,
   Package,
+  PackageX,
   TrendingUp,
   TrendingDown,
   AlertCircle,

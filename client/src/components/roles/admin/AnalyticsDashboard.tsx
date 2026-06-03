@@ -1,5 +1,5 @@
 // client/src/components/roles/admin/AnalyticsDashboard.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   TrendingUp, TrendingDown, Users, BookOpen, DollarSign, 
   Calendar, Activity, Cpu, HardDrive, Network, Clock, 
@@ -96,8 +96,6 @@ export default function AnalyticsDashboard() {
   const [departmentMetrics, setDepartmentMetrics] = useState<DepartmentMetric[]>([]);
   const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
   
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-
   // Fetch all real data
   useEffect(() => {
     fetchAllData();
@@ -232,121 +230,72 @@ export default function AnalyticsDashboard() {
     }
   };
 
-  // Real-time chart rendering using Canvas/SVG
+  // Hook-free SVG charts keep analytics stable even when sections load independently.
   const renderLineChart = (data: { labels: string[]; datasets: { label: string; data: number[]; color: string }[] }, height = 250) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    
-    useEffect(() => {
-      if (!canvasRef.current || !data) return;
-      const ctx = canvasRef.current.getContext('2d');
-      if (!ctx) return;
-      
-      const width = canvasRef.current.width;
-      const height = canvasRef.current.height;
-      ctx.clearRect(0, 0, width, height);
-      
-      const maxValue = Math.max(...data.datasets.flatMap(d => d.data));
-      const padding = 40;
-      const chartWidth = width - padding * 2;
-      const chartHeight = height - padding * 2;
-      const pointSpacing = chartWidth / (data.labels.length - 1);
-      
-      // Draw grid
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i <= 4; i++) {
-        const y = padding + (chartHeight / 4) * i;
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width - padding, y);
-        ctx.stroke();
-      }
-      
-      // Draw lines and points for each dataset
-      data.datasets.forEach((dataset, di) => {
-        ctx.beginPath();
-        ctx.strokeStyle = dataset.color;
-        ctx.lineWidth = 2;
-        
-        dataset.data.forEach((value, i) => {
-          const x = padding + i * pointSpacing;
-          const y = padding + chartHeight - (value / maxValue) * chartHeight;
-          
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        });
-        ctx.stroke();
-        
-        // Draw points
-        dataset.data.forEach((value, i) => {
-          const x = padding + i * pointSpacing;
-          const y = padding + chartHeight - (value / maxValue) * chartHeight;
-          
-          ctx.fillStyle = dataset.color;
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.fillStyle = 'white';
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, 2 * Math.PI);
-          ctx.fill();
-        });
-      });
-      
-      // Draw labels
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '10px sans-serif';
-      data.labels.forEach((label, i) => {
-        const x = padding + i * pointSpacing - 15;
-        const y = height - 10;
-        ctx.fillText(label, x, y);
-      });
-    }, [data]);
-    
-    return <canvas ref={canvasRef} width={600} height={height} style={{ width: '100%', height: 'auto' }} />;
+    const width = 600;
+    const padding = 36;
+    const values = data.datasets.flatMap(dataset => dataset.data).filter(Number.isFinite);
+    const maxValue = Math.max(1, ...values);
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    const xStep = data.labels.length > 1 ? chartWidth / (data.labels.length - 1) : chartWidth;
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} className="analytics-svg-chart" role="img">
+        {[0, 1, 2, 3, 4].map((tick) => {
+          const y = padding + (chartHeight / 4) * tick;
+          return <line key={tick} x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e5e7eb" strokeWidth="1" />;
+        })}
+        {data.datasets.map((dataset) => {
+          const points = dataset.data.map((value, index) => {
+            const x = padding + index * xStep;
+            const y = padding + chartHeight - (Math.max(0, value) / maxValue) * chartHeight;
+            return `${x},${y}`;
+          }).join(' ');
+          return (
+            <g key={dataset.label}>
+              <polyline points={points} fill="none" stroke={dataset.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              {dataset.data.map((value, index) => {
+                const x = padding + index * xStep;
+                const y = padding + chartHeight - (Math.max(0, value) / maxValue) * chartHeight;
+                return <circle key={`${dataset.label}-${index}`} cx={x} cy={y} r="4" fill={dataset.color} stroke="#fff" strokeWidth="2" />;
+              })}
+            </g>
+          );
+        })}
+        {data.labels.map((label, index) => (
+          <text key={label + index} x={padding + index * xStep} y={height - 10} textAnchor="middle" fontSize="11" fill="#64748b">{label}</text>
+        ))}
+      </svg>
+    );
   };
 
   const renderBarChart = (data: { labels: string[]; values: number[]; colors?: string[] }, height = 200) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    
-    useEffect(() => {
-      if (!canvasRef.current) return;
-      const ctx = canvasRef.current.getContext('2d');
-      if (!ctx) return;
-      
-      const width = canvasRef.current.width;
-      const height = canvasRef.current.height;
-      ctx.clearRect(0, 0, width, height);
-      
-      const maxValue = Math.max(...data.values);
-      const padding = 40;
-      const chartWidth = width - padding * 2;
-      const barWidth = (chartWidth / data.values.length) * 0.7;
-      const barSpacing = (chartWidth / data.values.length) * 0.3;
-      
-      data.values.forEach((value, i) => {
-        const barHeight = (value / maxValue) * (height - padding * 2);
-        const x = padding + i * (barWidth + barSpacing);
-        const y = height - padding - barHeight;
-        
-        ctx.fillStyle = data.colors?.[i] || '#667eea';
-        ctx.fillRect(x, y, barWidth, barHeight);
-        
-        // Add value label
-        ctx.fillStyle = '#374151';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(value.toString(), x + barWidth / 3, y - 5);
-        
-        // Add label
-        ctx.fillStyle = '#6b7280';
-        ctx.fillText(data.labels[i], x + barWidth / 4, height - padding + 15);
-      });
-    }, [data]);
-    
-    return <canvas ref={canvasRef} width={500} height={height} style={{ width: '100%', height: 'auto' }} />;
+    const width = 500;
+    const padding = 34;
+    const maxValue = Math.max(1, ...data.values.filter(Number.isFinite));
+    const chartWidth = width - padding * 2;
+    const band = data.values.length ? chartWidth / data.values.length : chartWidth;
+    const barWidth = Math.max(12, band * 0.64);
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} className="analytics-svg-chart" role="img">
+        {[0, 1, 2, 3].map((tick) => {
+          const y = padding + ((height - padding * 2) / 3) * tick;
+          return <line key={tick} x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e5e7eb" strokeWidth="1" />;
+        })}
+        {data.values.map((value, index) => {
+          const barHeight = (Math.max(0, value) / maxValue) * (height - padding * 2);
+          const x = padding + index * band + (band - barWidth) / 2;
+          const y = height - padding - barHeight;
+          return (
+            <g key={`${data.labels[index]}-${index}`}>
+              <rect x={x} y={y} width={barWidth} height={barHeight} rx="5" fill={data.colors?.[index] || '#2563eb'} />
+              <text x={x + barWidth / 2} y={Math.max(14, y - 6)} textAnchor="middle" fontSize="11" fill="#334155">{value}</text>
+              <text x={x + barWidth / 2} y={height - 10} textAnchor="middle" fontSize="11" fill="#64748b">{data.labels[index]}</text>
+            </g>
+          );
+        })}
+      </svg>
+    );
   };
 
   if (loading) {

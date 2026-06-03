@@ -10,6 +10,7 @@ import {
   Languages, BellRing, MessageSquare, Smartphone, Laptop
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { InventoryCategory, StorageLocation as BaseStorageLocation } from '../../../types/storeKeeper';
 import { Modal } from '../../ui/Modal';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
@@ -82,24 +83,17 @@ interface StoreSettings {
   archiveAfterDays: number;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  itemCount: number;
+type Category = InventoryCategory & {
   color: string;
-}
+};
 
-interface StorageLocation {
-  id: string;
-  name: string;
+type StorageLocation = Pick<BaseStorageLocation, 'id' | 'name' | 'description'> & {
   building: string;
   room: string;
   shelf: string;
   capacity: number;
   currentOccupancy: number;
-  description: string;
-}
+};
 
 const defaultSettings: StoreSettings = {
   defaultReorderLevel: 10,

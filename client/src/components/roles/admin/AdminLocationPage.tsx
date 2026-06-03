@@ -162,7 +162,7 @@ export default function AdminLocationPage() {
             latitude: newPos.lat(),
             longitude: newPos.lng()
           }));
-          toast.info('Location pin moved. Save to update.');
+          toast('Location pin moved. Save to update.');
         });
 
         // Add click listener to map

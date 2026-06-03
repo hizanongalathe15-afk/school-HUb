@@ -97,7 +97,7 @@ export default function AdminStaffPage() {
       setStaff(response.users as any);
       setTotalPages(response.pages);
       setTotalStaff(response.total);
-      calculateStats(response.users);
+      calculateStats(response.users as Staff[]);
     } catch (error) {
       toast.error('Failed to load staff');
       console.error(error);

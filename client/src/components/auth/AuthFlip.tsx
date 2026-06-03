@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, Sparkles, User, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Code as Github, Eye, EyeOff, Lock, Mail, Phone, Share2 as Facebook, ShieldCheck, Sparkles, User, Zap } from 'lucide-react';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { getDashboardPathForRole } from '../../utils/roleRoutes';
@@ -42,6 +42,11 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
     { icon: ShieldCheck, title: 'Secure access', desc: 'Role based school portals' },
     { icon: Zap, title: 'Fast workflows', desc: 'Attendance, fees, classes, and messages' },
     { icon: Sparkles, title: 'Smart school tools', desc: 'Clean dashboards for every team' }
+  ];
+  const socialProviders = [
+    { name: 'Google', className: 'auth-social--google', icon: <span aria-hidden="true">G</span> },
+    { name: 'GitHub', className: 'auth-social--github', icon: <Github size={17} aria-hidden="true" /> },
+    { name: 'Facebook', className: 'auth-social--facebook', icon: <Facebook size={17} aria-hidden="true" /> }
   ];
 
   async function submitLogin(event: FormEvent) {
@@ -99,6 +104,10 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
     setMode(nextMode);
   }
 
+  function handleSocialLogin(provider: string) {
+    setMessage(`${provider} sign-in is not configured yet.`);
+  }
+
   return (
     <AuthPageChrome>
       {(content) => {
@@ -106,7 +115,7 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
         const schoolName = content.school.name || 'School Hub';
 
         return (
-      <section className="auth-stage auth-stage--split" aria-label={t('auth.authentication')}>
+      <section className={`auth-stage auth-stage--split ${mode === 'signup' ? 'auth-stage--signup' : ''}`} aria-label={t('auth.authentication')}>
         <aside className="auth-info-panel" aria-hidden="true">
           <div className="auth-info-panel__brand">
             <span>
@@ -149,6 +158,22 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
               <button type="button" onClick={() => flip('signup')}>{t('auth.createAccount')}</button>
             </div>
 
+            <div className="auth-social-grid" aria-label="Social sign in">
+              {socialProviders.map((provider) => (
+                <button
+                  key={provider.name}
+                  type="button"
+                  className={`auth-social ${provider.className}`}
+                  onClick={() => handleSocialLogin(provider.name)}
+                >
+                  {provider.icon}
+                  <span>{provider.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="auth-divider"><span>or continue with email</span></div>
+
             <label className="auth-field">
               <span>{t('auth.emailAddress')}</span>
               <Mail size={18} aria-hidden="true" />
@@ -164,7 +189,10 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
             </label>
 
             {message && mode === 'login' && <div className="form-alert form-alert--error">{message}</div>}
-            <button className="auth-submit" type="submit" disabled={loading}>{loading ? t('auth.signingIn') : t('auth.signIn')}</button>
+            <button className="auth-submit" type="submit" disabled={loading}>
+              {loading ? t('auth.signingIn') : t('auth.signIn')}
+              {!loading && <ArrowRight size={17} aria-hidden="true" />}
+            </button>
             <div className="auth-row">
               <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
               <button type="button" onClick={() => flip('signup')}>{t('auth.createAccount')}</button>
@@ -194,6 +222,20 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
               <button type="button" onClick={() => flip('login')}>{t('auth.signIn')}</button>
               <button type="button" className="active" onClick={() => flip('signup')}>{t('auth.createAccount')}</button>
             </div>
+            <div className="auth-social-grid" aria-label="Social sign up">
+              {socialProviders.map((provider) => (
+                <button
+                  key={provider.name}
+                  type="button"
+                  className={`auth-social ${provider.className}`}
+                  onClick={() => handleSocialLogin(provider.name)}
+                >
+                  {provider.icon}
+                  <span>{provider.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="auth-divider"><span>or continue with email</span></div>
             <div className="auth-two">
               <label className="auth-field"><span>{t('auth.firstName')}</span><User size={18} aria-hidden="true" /><input autoComplete="given-name" required value={signupForm.firstName} onChange={(event) => setSignupForm({ ...signupForm, firstName: event.target.value })} /></label>
               <label className="auth-field"><span>{t('auth.lastName')}</span><User size={18} aria-hidden="true" /><input autoComplete="family-name" required value={signupForm.lastName} onChange={(event) => setSignupForm({ ...signupForm, lastName: event.target.value })} /></label>
@@ -205,7 +247,10 @@ export default function AuthFlip({ initialMode = 'login' }: AuthFlipProps) {
               <label className="auth-field"><span>{t('auth.confirmPassword')}</span><Lock size={18} aria-hidden="true" /><input type="password" autoComplete="new-password" required value={signupForm.confirmPassword} onChange={(event) => setSignupForm({ ...signupForm, confirmPassword: event.target.value })} /></label>
             </div>
             {message && mode === 'signup' && <div className="form-alert form-alert--error">{message}</div>}
-            <button className="auth-submit" type="submit" disabled={loading}>{loading ? t('auth.creatingAccount') : t('auth.createAccount')}</button>
+            <button className="auth-submit" type="submit" disabled={loading}>
+              {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
+              {!loading && <ArrowRight size={17} aria-hidden="true" />}
+            </button>
             <div className="auth-row">
               <span>{t('auth.alreadyRegistered')}</span>
               <button type="button" onClick={() => flip('login')}>{t('auth.signIn')}</button>

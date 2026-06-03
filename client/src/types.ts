@@ -11,6 +11,7 @@ export interface PublicPageSection {
   body: string;
   image?: string;
   video?: string;
+  audio?: string;
 }
 
 export interface PublicPageContent {
@@ -37,6 +38,13 @@ export interface LandingContent {
     website?: string;
     primaryColor?: string;
     secondaryColor?: string;
+    social?: {
+      facebook?: string;
+      twitter?: string;
+      instagram?: string;
+      linkedin?: string;
+      youtube?: string;
+    };
     contact: {
       email: string;
       phone: string;
@@ -70,6 +78,7 @@ export interface LandingContent {
     subtitle: string;
     image: string;
     video?: string;
+    audio?: string;
     playbackRate?: number;
     accent: Accent;
   }>;

@@ -1,7 +1,7 @@
 // client/src/components/roles/admin/AdminInfrastructurePage.tsx
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
-  Building2, Camera, Edit, Film, Plus, RefreshCw, Save, Trash2, Upload,
+  Building2, Camera, Edit, Film, Plus, RefreshCw, Save, Trash2, Upload, Search,
   Image, Video, X, Check, AlertCircle, MapPin, Users, Calendar,
   Wrench, DollarSign, User, FileText, Grid, List, Eye, EyeOff,
   Copy, Link, ExternalLink, Download, Printer, Share2, Heart,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { infrastructureService } from '../../../services/adminService';
+import type { MaintenanceLog } from '../../../types/admin';
 import { fileToDataUrl } from '../../../utils/fileToDataUrl';
 
 type Condition = 'excellent' | 'good' | 'fair' | 'poor';
@@ -47,17 +48,6 @@ interface Facility {
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
-}
-
-interface MaintenanceLog {
-  id: string;
-  facilityId: string;
-  date: string;
-  description: string;
-  cost: number;
-  performedBy: string;
-  nextDue?: string;
-  attachments?: string[];
 }
 
 const emptyFacility: Omit<Facility, 'id'> = {

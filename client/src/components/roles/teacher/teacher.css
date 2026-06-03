@@ -1524,3 +1524,96 @@
     grid-template-columns: 1fr;
   }
 }
+
+.teacher-portal-layout {
+  position: relative;
+}
+
+.teacher-portal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  border: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.teacher-portal-sidebar {
+  transform: translateX(-110%);
+  transition: transform 0.25s ease;
+}
+
+.teacher-portal-sidebar.is-open {
+  transform: translateX(0);
+}
+
+.teacher-portal-main {
+  width: 100%;
+}
+
+.teacher-portal-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.teacher-portal-menu-btn {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.teacher-portal-topbar__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.teacher-portal-topbar__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.teacher-portal-content {
+  min-width: 0;
+  padding: 0;
+}
+
+@media (min-width: 1024px) {
+  .teacher-portal-sidebar {
+    transform: translateX(0);
+  }
+
+  .teacher-portal-main {
+    margin-left: 18rem;
+  }
+
+  .teacher-portal-topbar,
+  .teacher-portal-overlay {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .teacher-portal-topbar {
+    display: flex;
+  }
+
+  .teacher-portal-content {
+    padding: 12px;
+  }
+}

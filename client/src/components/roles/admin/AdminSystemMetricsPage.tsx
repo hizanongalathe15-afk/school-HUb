@@ -20,7 +20,7 @@ import {
   CloudLightning, CloudSnow, CloudRain as CloudRainIcon, Sun as SunIcon,
   Moon as MoonIcon, Wind as WindIcon, Droplets as DropletsIcon,
   Thermometer as ThermometerIcon, Activity as ActivityIcon, Zap as ZapIcon,
-  Image as ImageIcon, Video, File, Folder, SortAsc, SortDesc, Filter, Image
+  Image as ImageIcon, Video, File, Folder, SortAsc, SortDesc, Filter, Image, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -36,6 +36,13 @@ import ConfirmDialog from '../../ui/ConfirmDialog';
 type HealthStatus = 'healthy' | 'warning' | 'critical' | 'degraded';
 type SortOrder = 'asc' | 'desc';
 type MediaType = 'image' | 'video' | 'document' | 'audio' | 'all';
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<U>
+    : T[P] extends object
+      ? DeepPartial<T[P]>
+      : T[P];
+};
 
 interface MediaFile {
   id: string;
@@ -186,7 +193,7 @@ const emptyMetrics: MetricResponse = {
 };
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
@@ -204,6 +211,103 @@ function getMediaTypeIcon(type: MediaType) {
     case 'audio': return <Music size={16} />;
     default: return <File size={16} />;
   }
+}
+
+function normalizeMetricsResponse(metricsResponse: DeepPartial<MetricResponse>): MetricResponse {
+  const rawNetwork = metricsResponse.system?.network as (DeepPartial<MetricResponse['system']['network']> & {
+    packetsIn?: number;
+    packetsOut?: number;
+  }) | undefined;
+  const networkDownload = Number(rawNetwork?.download ?? emptyMetrics.system.network.download);
+  const networkUpload = Number(rawNetwork?.upload ?? emptyMetrics.system.network.upload);
+  const networkLatency = Number(rawNetwork?.latency ?? emptyMetrics.system.network.latency);
+  const networkSpeed = rawNetwork?.speed || {};
+
+  return {
+    ...emptyMetrics,
+    ...metricsResponse,
+    server: { ...emptyMetrics.server, ...metricsResponse.server },
+    health: {
+      ...emptyMetrics.health,
+      ...metricsResponse.health,
+      issues: metricsResponse.health?.issues || emptyMetrics.health.issues,
+      recommendations: metricsResponse.health?.recommendations || emptyMetrics.health.recommendations
+    },
+    system: {
+      ...emptyMetrics.system,
+      ...metricsResponse.system,
+      cpu: {
+        ...emptyMetrics.system.cpu,
+        ...metricsResponse.system?.cpu,
+        cache: { ...emptyMetrics.system.cpu.cache, ...metricsResponse.system?.cpu?.cache },
+        perCore: metricsResponse.system?.cpu?.perCore || emptyMetrics.system.cpu.perCore
+      },
+      memory: { ...emptyMetrics.system.memory, ...metricsResponse.system?.memory },
+      storage: {
+        ...emptyMetrics.system.storage,
+        ...metricsResponse.system?.storage,
+        disks: (metricsResponse.system?.storage?.disks || emptyMetrics.system.storage.disks).map((disk) => ({
+          readSpeed: 0,
+          writeSpeed: 0,
+          type: 'disk',
+          mount: '',
+          ...disk
+        })),
+        iops: { ...emptyMetrics.system.storage.iops, ...metricsResponse.system?.storage?.iops }
+      },
+      network: {
+        ...emptyMetrics.system.network,
+        ...rawNetwork,
+        download: networkDownload,
+        upload: networkUpload,
+        latency: networkLatency,
+        packets: {
+          ...emptyMetrics.system.network.packets,
+          ...rawNetwork?.packets,
+          received: Number(rawNetwork?.packets?.received ?? rawNetwork?.packetsIn ?? emptyMetrics.system.network.packets.received),
+          sent: Number(rawNetwork?.packets?.sent ?? rawNetwork?.packetsOut ?? emptyMetrics.system.network.packets.sent),
+          dropped: Number(rawNetwork?.packets?.dropped ?? emptyMetrics.system.network.packets.dropped)
+        },
+        interfaces: rawNetwork?.interfaces || emptyMetrics.system.network.interfaces,
+        connections: { ...emptyMetrics.system.network.connections, ...rawNetwork?.connections },
+        speed: {
+          ...emptyMetrics.system.network.speed,
+          ...networkSpeed,
+          download: Number(networkSpeed.download ?? networkDownload),
+          upload: Number(networkSpeed.upload ?? networkUpload),
+          latency: Number(networkSpeed.latency ?? networkLatency),
+          timestamp: networkSpeed.timestamp || metricsResponse.system?.timestamp || emptyMetrics.system.network.speed.timestamp,
+          downloadHistory: networkSpeed.downloadHistory || emptyMetrics.system.network.speed.downloadHistory,
+          uploadHistory: networkSpeed.uploadHistory || emptyMetrics.system.network.speed.uploadHistory
+        }
+      },
+      database: { ...emptyMetrics.system.database, ...metricsResponse.system?.database },
+      mediaStats: {
+        ...emptyMetrics.system.mediaStats,
+        ...metricsResponse.system?.mediaStats,
+        images: { ...emptyMetrics.system.mediaStats.images, ...metricsResponse.system?.mediaStats?.images },
+        videos: { ...emptyMetrics.system.mediaStats.videos, ...metricsResponse.system?.mediaStats?.videos },
+        documents: { ...emptyMetrics.system.mediaStats.documents, ...metricsResponse.system?.mediaStats?.documents },
+        audio: { ...emptyMetrics.system.mediaStats.audio, ...metricsResponse.system?.mediaStats?.audio }
+      },
+      mediaFiles: metricsResponse.system?.mediaFiles || emptyMetrics.system.mediaFiles,
+      processes: metricsResponse.system?.processes || emptyMetrics.system.processes,
+      services: metricsResponse.system?.services || emptyMetrics.system.services,
+      requestsPerMinute: metricsResponse.system?.requestsPerMinute || emptyMetrics.system.requestsPerMinute,
+      responseTime: metricsResponse.system?.responseTime || emptyMetrics.system.responseTime,
+      errorRate: metricsResponse.system?.errorRate || emptyMetrics.system.errorRate
+    },
+    wakeTime: { ...emptyMetrics.wakeTime, ...metricsResponse.wakeTime },
+    request: { ...emptyMetrics.request, ...metricsResponse.request },
+    account: {
+      ...emptyMetrics.account,
+      ...metricsResponse.account,
+      activeSessions: metricsResponse.account?.activeSessions || emptyMetrics.account.activeSessions,
+      revokedSessions: metricsResponse.account?.revokedSessions || emptyMetrics.account.revokedSessions,
+      permissions: metricsResponse.account?.permissions || emptyMetrics.account.permissions
+    },
+    alerts: metricsResponse.alerts || emptyMetrics.alerts
+  };
 }
 
 export default function AdminSystemMetricsPage() {
@@ -224,16 +328,7 @@ export default function AdminSystemMetricsPage() {
     setRefreshing(true);
     try {
       const metricsResponse = await systemMetricsService.getDetailed();
-      setData(prev => ({
-        ...emptyMetrics,
-        ...metricsResponse,
-        system: {
-          ...emptyMetrics.system,
-          ...metricsResponse.system,
-          mediaStats: metricsResponse.system?.mediaStats || emptyMetrics.system.mediaStats,
-          mediaFiles: metricsResponse.system?.mediaFiles || []
-        }
-      }));
+      setData(normalizeMetricsResponse(metricsResponse));
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
       console.error('Failed to load system metrics', error);
@@ -293,6 +388,9 @@ export default function AdminSystemMetricsPage() {
 
   const downloadHistory = data.system.network?.speed?.downloadHistory || [];
   const uploadHistory = data.system.network?.speed?.uploadHistory || [];
+  const networkSpeed = data.system.network.speed;
+  const downloadPeak = Math.max(networkSpeed.download, ...downloadHistory);
+  const uploadPeak = Math.max(networkSpeed.upload, ...uploadHistory);
   const networkChartData = downloadHistory.slice(-20).map((d, i) => ({
     time: i,
     download: d / 1024 / 1024,
@@ -411,23 +509,23 @@ export default function AdminSystemMetricsPage() {
               <Download size={28} />
               <div>
                 <span className="speed-label">Download Speed</span>
-                <span className="speed-value">{formatSpeed(data.system.network.speed.download)}</span>
-                <span className="speed-detail">Peak: {formatSpeed(Math.max(...data.system.network.speed.downloadHistory, data.system.network.speed.download))}</span>
+                <span className="speed-value">{formatSpeed(networkSpeed.download)}</span>
+                <span className="speed-detail">Peak: {formatSpeed(downloadPeak)}</span>
               </div>
             </div>
             <div className="speed-card upload">
               <Upload size={28} />
               <div>
                 <span className="speed-label">Upload Speed</span>
-                <span className="speed-value">{formatSpeed(data.system.network.speed.upload)}</span>
-                <span className="speed-detail">Peak: {formatSpeed(Math.max(...data.system.network.speed.uploadHistory, data.system.network.speed.upload))}</span>
+                <span className="speed-value">{formatSpeed(networkSpeed.upload)}</span>
+                <span className="speed-detail">Peak: {formatSpeed(uploadPeak)}</span>
               </div>
             </div>
             <div className="speed-card latency">
               <Gauge size={28} />
               <div>
                 <span className="speed-label">Latency</span>
-                <span className="speed-value">{data.system.network.speed.latency} ms</span>
+                <span className="speed-value">{networkSpeed.latency} ms</span>
                 <span className="speed-detail">Response time</span>
               </div>
             </div>
@@ -738,6 +836,3 @@ export default function AdminSystemMetricsPage() {
     </div>
   );
 }
-
-// Add missing import
-import { Search } from 'lucide-react';

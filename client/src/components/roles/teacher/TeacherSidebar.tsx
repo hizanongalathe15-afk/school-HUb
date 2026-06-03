@@ -201,7 +201,12 @@ const getActiveItemFromPath = (pathname: string): string => {
   return match?.id || 'dashboard';
 };
 
-export default function TeacherSidebar() {
+interface TeacherSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function TeacherSidebar({ isOpen = false, onClose }: TeacherSidebarProps) {
   const { user, logout } = useAuth();
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -216,6 +221,7 @@ export default function TeacherSidebar() {
   const handleNavigation = (path: string, id: string) => {
     setActiveItem(id);
     navigate(path);
+    onClose?.();
   };
 
   const handleLogout = async () => {
@@ -251,7 +257,7 @@ export default function TeacherSidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-30 flex flex-col overflow-y-auto">
+    <aside className={clsx('teacher-portal-sidebar fixed left-0 top-0 z-40 flex h-full w-72 flex-col overflow-y-auto border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900', isOpen && 'is-open')}>
       {/* Header */}
       <div className="flex items-center gap-3 h-16 px-4 border-b border-gray-200 dark:border-gray-800">
         <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">

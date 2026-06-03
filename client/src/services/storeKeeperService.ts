@@ -104,6 +104,47 @@ export const inventoryAPI = {
     const response = await api.get(`/storekeeper/inventory/${itemId}/history`);
     return response.data;
   },
+
+  uploadImage: async (fileOrItemId: File | string, file?: File) => {
+    const itemId = file ? String(fileOrItemId) : 'temp';
+    const uploadFile = file ?? (fileOrItemId as File);
+    const formData = new FormData();
+    formData.append('image', uploadFile);
+    const response = await api.post(`/storekeeper/inventory/${itemId}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  getExpirySummary: async () => {
+    const response = await api.get('/storekeeper/inventory/expiry-summary');
+    return response.data?.data ?? response.data;
+  },
+
+  generateExpiryReport: async (filters?: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/inventory/expiry-report', filters ?? {}, { responseType: 'blob' });
+    return response.data;
+  },
+
+  addFixedAsset: async (data: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/fixed-assets', data);
+    return response.data;
+  },
+
+  updateFixedAsset: async (assetId: string, data: Record<string, unknown> | object) => {
+    const response = await api.put(`/storekeeper/fixed-assets/${assetId}`, data);
+    return response.data;
+  },
+
+  addAssetMaintenance: async (assetId: string, data: Record<string, unknown>) => {
+    const response = await api.post(`/storekeeper/fixed-assets/${assetId}/maintenance`, data);
+    return response.data;
+  },
+
+  disposeFixedAsset: async (assetId: string, data?: Record<string, unknown>) => {
+    const response = await api.post(`/storekeeper/fixed-assets/${assetId}/dispose`, data ?? {});
+    return response.data;
+  },
 };
 
 // ============================================
@@ -178,6 +219,10 @@ export const requestsAPI = {
   getRequests: async (params?: {
     status?: string;
     priority?: string;
+    requestType?: string;
+    requesterType?: string;
+    startDate?: string;
+    endDate?: string;
     page?: number;
     limit?: number;
   }): Promise<StoreKeeperApiResponse<StockRequest[]>> => {
@@ -190,13 +235,19 @@ export const requestsAPI = {
     return response.data;
   },
 
-  approveRequest: async (requestId: string, items?: { itemId: string; quantity: number }[]) => {
-    const response = await api.post(`/storekeeper/requests/${requestId}/approve`, { items });
+  approveRequest: async (requestId: string, itemsOrNotes?: { itemId: string; quantity?: number; approvedQuantity?: number }[] | string | Record<string, unknown>, notes?: string | boolean) => {
+    const payload = Array.isArray(itemsOrNotes)
+      ? { items: itemsOrNotes.map((item) => ({ itemId: item.itemId, quantity: item.quantity ?? item.approvedQuantity ?? 0 })), notes: typeof notes === 'string' ? notes : undefined }
+      : typeof itemsOrNotes === 'object' && itemsOrNotes !== null && !Array.isArray(itemsOrNotes)
+        ? itemsOrNotes
+        : { notes: typeof itemsOrNotes === 'string' ? itemsOrNotes : undefined };
+    const response = await api.post(`/storekeeper/requests/${requestId}/approve`, payload);
     return response.data;
   },
 
-  rejectRequest: async (requestId: string, reason: string) => {
-    const response = await api.post(`/storekeeper/requests/${requestId}/reject`, { reason });
+  rejectRequest: async (requestId: string, reason: string | boolean, notes?: string) => {
+    const payload = typeof reason === 'boolean' ? { permanent: reason, notes } : { reason, notes };
+    const response = await api.post(`/storekeeper/requests/${requestId}/reject`, payload);
     return response.data;
   },
 
@@ -209,6 +260,16 @@ export const requestsAPI = {
     const response = await api.post('/storekeeper/requests', requestData);
     return response.data;
   },
+
+  cancelRequest: async (requestId: string, reason?: string) => {
+    const response = await api.post(`/storekeeper/requests/${requestId}/cancel`, { reason });
+    return response.data;
+  },
+
+  sendNotification: async (requestId: string, message?: string) => {
+    const response = await api.post(`/storekeeper/requests/${requestId}/notify`, { message });
+    return response.data;
+  },
 };
 
 // ============================================
@@ -218,6 +279,9 @@ export const purchaseOrdersAPI = {
   getPurchaseOrders: async (params?: {
     status?: string;
     supplierId?: string;
+    priority?: string;
+    startDate?: string;
+    endDate?: string;
     page?: number;
     limit?: number;
   }): Promise<StoreKeeperApiResponse<PurchaseOrder[]>> => {
@@ -230,12 +294,12 @@ export const purchaseOrdersAPI = {
     return response.data;
   },
 
-  createPurchaseOrder: async (poData: Partial<PurchaseOrder>) => {
+  createPurchaseOrder: async (poData: Partial<PurchaseOrder> | Record<string, unknown>) => {
     const response = await api.post('/storekeeper/purchase-orders', poData);
     return response.data;
   },
 
-  updatePurchaseOrder: async (poId: string, poData: Partial<PurchaseOrder>) => {
+  updatePurchaseOrder: async (poId: string, poData: Partial<PurchaseOrder> | Record<string, unknown>) => {
     const response = await api.put(`/storekeeper/purchase-orders/${poId}`, poData);
     return response.data;
   },
@@ -257,6 +321,16 @@ export const purchaseOrdersAPI = {
 
   cancelPurchaseOrder: async (poId: string, reason: string) => {
     const response = await api.post(`/storekeeper/purchase-orders/${poId}/cancel`, { reason });
+    return response.data;
+  },
+
+  updateOrderStatus: async (poId: string, status: string) => {
+    const response = await api.patch(`/storekeeper/purchase-orders/${poId}/status`, { status });
+    return response.data;
+  },
+
+  deletePurchaseOrder: async (poId: string) => {
+    const response = await api.delete(`/storekeeper/purchase-orders/${poId}`);
     return response.data;
   },
 };
@@ -281,9 +355,16 @@ export const movementsAPI = {
   issueItems: async (data: {
     itemId: string;
     quantity: number;
-    issuedTo: string;
+    issuedTo?: string;
+    issuedToId?: string;
     issuedToName: string;
     notes?: string;
+    issuedToType?: string;
+    department?: string;
+    purpose?: string;
+    expectedReturnDate?: string;
+    isBorrowable?: boolean;
+    [key: string]: unknown;
   }) => {
     const response = await api.post('/storekeeper/movements/issue', data);
     return response.data;
@@ -293,11 +374,19 @@ export const movementsAPI = {
   returnItems: async (data: {
     itemId: string;
     quantity: number;
-    returnedBy: string;
+    returnedBy?: string;
     condition?: string;
     notes?: string;
+    movementId?: string;
+    [key: string]: unknown;
   }) => {
     const response = await api.post('/storekeeper/movements/return', data);
+    return response.data;
+  },
+
+  returnItem: async (dataOrId: Record<string, unknown> | string, notes?: string) => {
+    const payload = typeof dataOrId === 'string' ? { itemId: dataOrId, notes } : dataOrId;
+    const response = await api.post('/storekeeper/movements/return', payload);
     return response.data;
   },
 
@@ -321,6 +410,21 @@ export const movementsAPI = {
     notes?: string;
   }) => {
     const response = await api.post('/storekeeper/movements/write-off', data);
+    return response.data;
+  },
+
+  getMovementSummary: async (params?: Record<string, unknown>) => {
+    const response = await api.get('/storekeeper/movements/summary', { params });
+    return response.data?.data ?? response.data;
+  },
+
+  getIssueHistory: async (params?: Record<string, unknown>) => {
+    const response = await api.get('/storekeeper/movements/issues', { params });
+    return response.data?.data ?? response.data ?? [];
+  },
+
+  adjustStock: async (data: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/movements/adjust', data);
     return response.data;
   },
 };
@@ -538,6 +642,16 @@ export const alertsAPI = {
     const response = await api.get('/storekeeper/alerts/stats');
     return response.data;
   },
+
+  getAlertSummary: async () => {
+    const response = await api.get('/storekeeper/alerts/summary');
+    return response.data?.data ?? response.data;
+  },
+
+  getReorderSuggestions: async () => {
+    const response = await api.get('/storekeeper/alerts/reorder-suggestions');
+    return response.data?.data ?? response.data ?? [];
+  },
 };
 
 // ============================================
@@ -562,6 +676,11 @@ export const storageLocationsAPI = {
   deleteLocation: async (locationId: string) => {
     const response = await api.delete(`/storekeeper/locations/${locationId}`);
     return response.data;
+  },
+
+  getLocationSummary: async () => {
+    const response = await api.get('/storekeeper/locations/summary');
+    return response.data?.data ?? response.data;
   },
 };
 
@@ -650,8 +769,43 @@ export const notificationsAPI = {
 // SETTINGS API
 // ============================================
 export const settingsAPI = {
+  getSettings: async () => {
+    const response = await api.get('/storekeeper/settings');
+    return response.data?.data ?? response.data;
+  },
+
   updateSettings: async (settings: any) => {
     const response = await api.put('/storekeeper/settings', settings);
+    return response.data;
+  },
+
+  updateCategory: async (categoryId: string, data: Record<string, unknown>) => {
+    const response = await api.put(`/storekeeper/settings/categories/${categoryId}`, data);
+    return response.data;
+  },
+
+  createCategory: async (data: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/settings/categories', data);
+    return response.data;
+  },
+
+  deleteCategory: async (categoryId: string) => {
+    const response = await api.delete(`/storekeeper/settings/categories/${categoryId}`);
+    return response.data;
+  },
+
+  updateLocation: async (locationId: string, data: Record<string, unknown>) => {
+    const response = await api.put(`/storekeeper/settings/locations/${locationId}`, data);
+    return response.data;
+  },
+
+  createLocation: async (data: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/settings/locations', data);
+    return response.data;
+  },
+
+  deleteLocation: async (locationId: string) => {
+    const response = await api.delete(`/storekeeper/settings/locations/${locationId}`);
     return response.data;
   },
 };
@@ -664,6 +818,18 @@ export const fixedAssetsAPI = {
     const response = await api.get('/storekeeper/fixed-assets');
     return response.data?.data || [];
   },
+
+  getFixedAssetsSummary: async () => {
+    const response = await api.get('/storekeeper/fixed-assets/summary');
+    const summary = response.data?.data ?? response.data;
+    return {
+      data: summary,
+      totalAssets: summary?.totalAssets ?? 0,
+      activeAssets: summary?.activeAssets ?? 0,
+      maintenanceDue: summary?.maintenanceDue ?? 0,
+      totalValue: summary?.totalValue ?? 0,
+    } as { data: typeof summary; totalAssets: number; activeAssets: number; maintenanceDue: number; totalValue: number };
+  },
 };
 
 // ============================================
@@ -675,8 +841,22 @@ export const deliveriesAPI = {
     return response.data?.data || [];
   },
 
-  markDeliveryReceived: async (id: string) => {
-    const response = await api.post(`/storekeeper/deliveries/${id}/receive`);
+  getDeliverySummary: async () => {
+    const response = await api.get('/storekeeper/deliveries/summary');
+    return response.data?.data ?? response.data;
+  },
+
+  markDeliveryReceived: async (id: string, items?: Array<Record<string, unknown>>) => {
+    const normalizedItems = items?.map((item) => ({
+      ...item,
+      quantity: item.quantity ?? item.deliveredQuantity ?? 0,
+    }));
+    const response = await api.post(`/storekeeper/deliveries/${id}/receive`, normalizedItems ? { items: normalizedItems } : {});
+    return response.data;
+  },
+
+  generateReport: async (filters?: Record<string, unknown>) => {
+    const response = await api.post('/storekeeper/deliveries/report', filters ?? {}, { responseType: 'blob' });
     return response.data;
   },
 };

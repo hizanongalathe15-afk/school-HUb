@@ -3,6 +3,7 @@ import { Modal } from '../../ui/Modal';
 import toast from 'react-hot-toast';
 import bursarService from '../../../services/bursarService';
 import type { AuditLog, AuditFilter, AuditSummary } from '../../../types/bursar';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
 const BursarAuditPage: React.FC = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -54,14 +55,11 @@ const BursarAuditPage: React.FC = () => {
         toast.success('Audit log exported successfully');
         // In a real app, we would trigger a download
         if (response.data) {
-          // If data is a base64 string or blob, create a download link
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `audit-log-${new Date().toISOString().slice(0, 10)}.json`);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
+          downloadFromServiceData(
+            response.data,
+            `audit-log-${new Date().toISOString().slice(0, 10)}.json`,
+            'application/json'
+          );
         }
       } else {
         toast.error(response.message || 'Failed to export audit log');
@@ -446,7 +444,7 @@ const BursarAuditPage: React.FC = () => {
 export default BursarAuditPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

@@ -5,7 +5,7 @@ import {
   PieChart, Printer, Mail, Eye, Edit, Trash2, Plus, Search,
   Filter, RefreshCw, CheckCircle, XCircle, AlertCircle, Award,
   Star, Users, BookOpen, Calendar, Clock, Upload, Copy,
-  ChevronDown, ChevronUp, MessageSquare, Target, Shield, Zap
+  ChevronDown, ChevronUp, MessageSquare, Target, Shield, Zap, Settings
 } from 'lucide-react';
 import { teacherService } from '../../../services/teacherService';
 import { Modal } from '../../ui/Modal';
@@ -16,44 +16,20 @@ import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
+import type { GradeEntry as BaseGradeEntry, GradeSummary as BaseGradeSummary } from '../../../types/teacher';
 
-interface GradeEntry {
-  id: string;
-  studentId: string;
-  studentName: string;
+type GradeEntry = BaseGradeEntry & {
   admissionNumber: string;
-  className: string;
-  classId: string;
-  subjectId: string;
-  subjectName: string;
-  term: string;
-  academicYear: string;
-  cat1Score: number | null;
-  cat2Score: number | null;
-  cat3Score: number | null;
   assignmentScore: number | null;
   practicalScore: number | null;
   projectScore: number | null;
-  examScore: number | null;
-  totalScore: number;
-  grade: string;
-  points: number;
   remarks: string;
-  enteredBy: string;
-  enteredByName: string;
-  enteredAt: string;
-  updatedAt: string;
-}
+};
 
-interface GradeSummary {
-  subjectId: string;
-  subjectName: string;
+type ClassGradeSummary = BaseGradeSummary & {
   classId: string;
   className: string;
-  term: string;
   academicYear: string;
-  totalStudents: number;
-  meanScore: number;
   highestScore: number;
   lowestScore: number;
   passRate: number;
@@ -73,7 +49,7 @@ interface GradeSummary {
   };
   topPerformers: Array<{ studentId: string; studentName: string; score: number }>;
   strugglingStudents: Array<{ studentId: string; studentName: string; score: number }>;
-}
+};
 
 interface AssessmentWeight {
   cat1: number;
@@ -139,7 +115,7 @@ function getGradeInfo(totalScore: number) {
 
 export default function TeacherGradesPage() {
   const [grades, setGrades] = useState<GradeEntry[]>([]);
-  const [summary, setSummary] = useState<GradeSummary | null>(null);
+  const [summary, setSummary] = useState<ClassGradeSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
@@ -176,6 +152,19 @@ export default function TeacherGradesPage() {
   const processImport = async () => {
     toast.error('Import not available');
     setShowImportModal(false);
+  };
+
+  const publishResults = async () => {
+    if (!selectedClass || !selectedTerm || !selectedYear) {
+      toast.error('Select class, term, and year first');
+      return;
+    }
+    try {
+      await teacherService.grades.publishResults(selectedClass, selectedTerm, selectedYear);
+      toast.success('Results published successfully');
+    } catch {
+      toast.error('Failed to publish results');
+    }
   };
 
   const resetSettings = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCcw, Download, Upload, CheckSquare, Square, Calendar, Users } from 'lucide-react';
+import { RefreshCcw, Download, Upload, CheckSquare, Square, Calendar, Users, Clock, UserCheck, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../../services/adminService';
 
@@ -9,6 +9,8 @@ export default function AdminAttendancePage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selected, setSelected] = useState<string[]>([]);
   const [showBulkMark, setShowBulkMark] = useState(false);
+  const presentCount = records.filter((record) => record.status === 'present' || record.status === 'late').length;
+  const absentCount = records.filter((record) => record.status === 'absent').length;
 
   const fetchData = async () => {
     setLoading(true);
@@ -51,53 +53,62 @@ export default function AdminAttendancePage() {
   };
 
   return (
-    <div className="admin-page p-6">
-      <div className="flex justify-between mb-6">
+    <div className="admin-page attendance-page">
+      <div className="page-header attendance-header">
         <div>
-          <h1 className="text-3xl font-bold">Attendance Management</h1>
-          <p className="text-gray-500">Daily attendance with bulk actions and imports</p>
+          <h1><Calendar size={28} /> Attendance Management</h1>
+          <p>Daily attendance with bulk actions, imports, and live class records.</p>
         </div>
-        <div className="flex gap-3 items-center">
-          <input type="date" value={date} onChange={e=>setDate(e.target.value)} className="border p-2 rounded" />
+        <div className="page-actions">
+          <div className="date-field"><Calendar size={16} /><input type="date" value={date} onChange={e=>setDate(e.target.value)} /></div>
           <button onClick={fetchData} className="btn btn-secondary"><RefreshCcw size={16}/> Refresh</button>
           <button onClick={exportAttendance} className="btn btn-secondary"><Download size={16}/> Export</button>
           <button onClick={() => setShowBulkMark(true)} disabled={selected.length===0} className="btn btn-primary">Bulk Mark</button>
         </div>
       </div>
 
-      {selected.length > 0 && <div className="mb-3 text-sm text-blue-700">{selected.length} students selected</div>}
+      <div className="attendance-stat-grid">
+        <div className="attendance-stat-card"><Users size={20} /><div><strong>{records.length}</strong><span>Total students</span></div></div>
+        <div className="attendance-stat-card present"><UserCheck size={20} /><div><strong>{presentCount}</strong><span>Present or late</span></div></div>
+        <div className="attendance-stat-card absent"><UserX size={20} /><div><strong>{absentCount}</strong><span>Absent</span></div></div>
+        <div className="attendance-stat-card"><Clock size={20} /><div><strong>{records.length ? Math.round((presentCount / records.length) * 100) : 0}%</strong><span>Attendance rate</span></div></div>
+      </div>
+
+      {selected.length > 0 && <div className="selection-banner">{selected.length} students selected</div>}
 
       <div 
         onDragOver={e=>e.preventDefault()} 
         onDrop={handleDrop}
-        className="mb-4 border-2 border-dashed p-6 text-center rounded-xl text-gray-500"
+        className="drag-zone attendance-import-zone"
       >
-        Drag &amp; drop Excel/CSV attendance file here for bulk import (supports hundreds of rows)
+        <Upload size={24} />
+        <strong>Drop attendance import here</strong>
+        <span>Excel/CSV files are accepted for bulk processing.</span>
       </div>
 
-      {loading ? <div>Loading...</div> : (
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
+      {loading ? <div className="loading-state"><div className="loader" /><p>Loading attendance...</p></div> : (
+        <div className="table-container attendance-table">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="p-4 w-10"><button onClick={toggleAll}>{selected.length === records.length ? <CheckSquare/> : <Square/>}</button></th>
-                <th className="p-4 text-left">Student</th>
-                <th className="p-4">Class</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Time In</th>
-                <th className="p-4">Actions</th>
+                <th className="checkbox-col"><button onClick={toggleAll}>{selected.length === records.length ? <CheckSquare size={18}/> : <Square size={18}/>}</button></th>
+                <th>Student</th>
+                <th>Class</th>
+                <th>Status</th>
+                <th>Time In</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {records.map((r: any, idx: number) => (
-                <tr key={idx} className="border-t">
-                  <td className="p-4"><button onClick={() => toggleSelect(r.id)}>{selected.includes(r.id) ? <CheckSquare className="text-blue-600"/> : <Square/>}</button></td>
-                  <td className="p-4">{r.studentName}</td>
-                  <td className="p-4">{r.className}</td>
-                  <td className="p-4"><span className={`px-3 py-1 rounded text-xs ${r.status==='present'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{r.status}</span></td>
-                  <td className="p-4">{r.timeIn || '-'}</td>
-                  <td className="p-4">
-                    <button onClick={() => {/* quick edit single */}} className="text-blue-600">Edit</button>
+                <tr key={r.studentId || idx}>
+                  <td><button className="icon-only-btn" onClick={() => toggleSelect(r.id)}>{selected.includes(r.id) ? <CheckSquare className="checked" size={18}/> : <Square size={18}/>}</button></td>
+                  <td><div className="student-cell"><strong>{r.studentName}</strong><span>{r.admissionNumber || r.studentId}</span></div></td>
+                  <td>{r.className}</td>
+                  <td><span className={`status-pill ${r.status}`}>{r.status}</span></td>
+                  <td>{r.timeIn || '-'}</td>
+                  <td>
+                    <button onClick={() => {/* quick edit single */}} className="link-action">Edit</button>
                   </td>
                 </tr>
               ))}
@@ -107,19 +118,20 @@ export default function AdminAttendancePage() {
       )}
 
       {showBulkMark && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-xs">
-            <h3 className="font-semibold mb-4">Mark {selected.length} students as:</h3>
-            <div className="flex gap-3">
-              <button onClick={() => markBulk('present')} className="flex-1 btn btn-primary">Present</button>
-              <button onClick={() => markBulk('absent')} className="flex-1 btn btn-danger">Absent</button>
+        <div className="modal-overlay">
+          <div className="modal-content modal-small">
+            <div className="modal-header"><h3>Bulk Mark Attendance</h3></div>
+            <div className="modal-body">
+              <p>Mark {selected.length} selected students as:</p>
+              <div className="bulk-mark-actions">
+                <button onClick={() => markBulk('present')} className="btn btn-primary">Present</button>
+                <button onClick={() => markBulk('absent')} className="btn btn-danger">Absent</button>
+              </div>
             </div>
-            <button onClick={() => setShowBulkMark(false)} className="w-full mt-3 btn btn-secondary">Cancel</button>
+            <div className="modal-footer"><button onClick={() => setShowBulkMark(false)} className="btn btn-secondary">Cancel</button></div>
           </div>
         </div>
       )}
-
-      <style>{`.btn{padding:8px 14px;border-radius:8px;font-weight:600} .btn-primary{background:#1d8a8a;color:white} .btn-secondary{background:#f1f5f9} .btn-danger{background:#dc2626;color:white}`}</style>
     </div>
   );
 }

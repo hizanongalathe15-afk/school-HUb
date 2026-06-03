@@ -62,6 +62,7 @@ export const childrenAPI = {
     admissionNumber: string;
     dateOfBirth: string;
     relationship: string;
+    studentEmail?: string;
   }): Promise<ParentApiResponse<ParentChild>> => {
     const response = await api.post('/parent/children/link-existing', data);
     return response.data;
@@ -178,10 +179,10 @@ export const academicAPI = {
 // ============================================
 export const attendanceAPI = {
   // Get attendance records for a month
-  getAttendance: async (childId: string, month?: number, year?: number): Promise<ParentApiResponse<AttendanceRecord[]>> => {
-    const params: any = {};
-    if (month) params.month = month;
-    if (year) params.year = year;
+  getAttendance: async (childId: string, monthOrParams?: number | { month?: number; year?: number }, year?: number): Promise<ParentApiResponse<AttendanceRecord[]>> => {
+    const params: any = typeof monthOrParams === 'object'
+      ? monthOrParams
+      : { ...(monthOrParams ? { month: monthOrParams } : {}), ...(year ? { year } : {}) };
     const response = await api.get(`/parent/children/${childId}/attendance`, { params });
     return response.data;
   },
@@ -259,12 +260,19 @@ export const feesAPI = {
   },
 
   // Make a payment (Card)
-  makeCardPayment: async (childId: string, amount: number, cardToken: string) => {
-    const response = await api.post('/parent/fees/pay/card', {
-      childId,
-      amount,
-      cardToken,
-    });
+  makeCardPayment: async (childId: string, amount: number, cardTokenOrDetails: string | Record<string, unknown>) => {
+    const payload = typeof cardTokenOrDetails === 'string'
+      ? { childId, amount, cardToken: cardTokenOrDetails }
+      : { childId, amount, ...cardTokenOrDetails };
+    const response = await api.post('/parent/fees/pay/card', payload);
+    return response.data;
+  },
+
+  confirmBankTransfer: async (referenceOrChildId: string, amountOrReference?: number | string, amount?: number) => {
+    const payload = typeof amountOrReference === 'number'
+      ? { childId: referenceOrChildId, reference: amount?.toString(), amount: amountOrReference }
+      : { childId: referenceOrChildId, reference: amountOrReference, amount };
+    const response = await api.post('/parent/fees/pay/bank-transfer/confirm', payload);
     return response.data;
   },
 
@@ -323,6 +331,11 @@ export const homeworkAPI = {
     const response = await api.get(`/parent/children/${childId}/homework/${homeworkId}/attachments/${fileName}`, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  markAsCompleted: async (childId: string, homeworkId: string) => {
+    const response = await api.post(`/parent/children/${childId}/homework/${homeworkId}/complete`);
     return response.data;
   },
 };
@@ -409,9 +422,14 @@ export const disciplineAPI = {
 // COMMUNICATION API
 // ============================================
 export const communicationAPI = {
-  // Get messages
-  getMessages: async (page?: number, limit?: number): Promise<ParentApiResponse<Message[]>> => {
-    const params: any = {};
+  // Get messages (optionally scoped to a conversation)
+  getMessages: async (
+    conversationId?: string,
+    page?: number,
+    limit?: number
+  ): Promise<ParentApiResponse<Message[]>> => {
+    const params: Record<string, string | number> = {};
+    if (conversationId) params.conversationId = conversationId;
     if (page) params.page = page;
     if (limit) params.limit = limit;
     const response = await api.get('/parent/messages', { params });
@@ -428,13 +446,24 @@ export const communicationAPI = {
   },
 
   // Send message to teacher
-  sendMessage: async (recipientId: string, subject: string, body: string, attachments?: string[]) => {
-    const response = await api.post('/parent/messages', {
-      recipientId,
-      subject,
-      body,
-      attachments,
-    });
+  sendMessage: async (
+    data:
+      | {
+          conversationId: string;
+          content: string;
+          replyToId?: string;
+          attachments?: string[];
+          editMode?: boolean;
+          messageId?: string;
+        }
+      | {
+          recipientId: string;
+          subject: string;
+          body: string;
+          attachments?: string[];
+        }
+  ): Promise<ParentApiResponse<Message>> => {
+    const response = await api.post('/parent/messages', data);
     return response.data;
   },
 
@@ -457,7 +486,7 @@ export const communicationAPI = {
   },
 
   // Upload attachments
-  uploadAttachments: async (files: File[]) => {
+  uploadAttachments: async (files: File[]): Promise<string[]> => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('files', file);
@@ -465,12 +494,19 @@ export const communicationAPI = {
     const response = await api.post('/parent/messages/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data;
+    const payload = response.data;
+    return payload?.data ?? payload?.urls ?? payload ?? [];
   },
 
   // Edit message
-  editMessage: async (messageId: string, updates: { subject?: string; body?: string }) => {
-    const response = await api.patch(`/parent/messages/${messageId}`, updates);
+  editMessage: async (
+    messageId: string,
+    updates: string | { subject?: string; body?: string; content?: string }
+  ): Promise<ParentApiResponse<Message>> => {
+    const payload = typeof updates === 'string'
+      ? { body: updates, content: updates }
+      : updates;
+    const response = await api.patch(`/parent/messages/${messageId}`, payload);
     return response.data;
   },
 
@@ -527,7 +563,7 @@ export const meetingsAPI = {
   },
 
   // Get booked meetings
-  getMyMeetings: async (status?: 'scheduled' | 'completed' | 'cancelled'): Promise<ParentApiResponse<ParentMeeting[]>> => {
+  getMyMeetings: async (status?: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled'): Promise<ParentApiResponse<ParentMeeting[]>> => {
     const params = status ? { status } : {};
     const response = await api.get('/parent/meetings', { params });
     return response.data;
@@ -563,11 +599,12 @@ export const meetingsAPI = {
 // ============================================
 export const eventsAPI = {
   // Get school events
-  getEvents: async (type?: string, startDate?: string, endDate?: string): Promise<ParentApiResponse<SchoolEvent[]>> => {
+  getEvents: async (type?: string, startDate?: string, endDate?: string, childId?: string): Promise<ParentApiResponse<SchoolEvent[]>> => {
     const params: any = {};
     if (type) params.type = type;
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (childId) params.childId = childId;
     const response = await api.get('/parent/events', { params });
     return response.data;
   },
@@ -713,21 +750,24 @@ export const profileAPI = {
 export const complaintsAPI = {
   // Submit a complaint
   submitComplaint: async (
-    category: string,
-    subject: string,
-    description: string,
+    categoryOrPayload: string | {
+      category: string;
+      subject: string;
+      description: string;
+      studentId?: string;
+      priority?: string;
+      attachments?: string[] | File;
+    },
+    subject?: string,
+    description?: string,
     studentId?: string,
     priority?: string,
-    attachments?: string[]
+    attachments?: string[] | File
   ) => {
-    const response = await api.post('/parent/complaints', {
-      category,
-      subject,
-      description,
-      studentId,
-      priority,
-      attachments,
-    });
+    const payload = typeof categoryOrPayload === 'object'
+      ? categoryOrPayload
+      : { category: categoryOrPayload, subject: subject!, description: description!, studentId, priority, attachments };
+    const response = await api.post('/parent/complaints', payload);
     return response.data;
   },
 
@@ -785,6 +825,11 @@ export const notificationsAPI = {
     const response = await api.get('/parent/notifications/unread-count');
     return response.data;
   },
+
+  deleteNotification: async (notificationId: string) => {
+    const response = await api.delete(`/parent/notifications/${notificationId}`);
+    return response.data;
+  },
 };
 
 // ============================================
@@ -838,6 +883,16 @@ export const downloadsAPI = {
     });
     return response.data;
   },
+
+  downloadReportCard: async (childIdOrReportId: string, termId?: string) => {
+    if (termId) {
+      return academicAPI.downloadReportCard(childIdOrReportId, termId);
+    }
+    const response = await api.get(`/parent/downloads/reports/${childIdOrReportId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // ============================================
@@ -882,6 +937,13 @@ export const schoolInfoAPI = {
 };
 
 // Export all APIs as a single object for convenience
+function unwrapParentResponse<T>(response: ParentApiResponse<T> | T): T {
+  if (response && typeof response === 'object' && 'data' in (response as object)) {
+    return (response as ParentApiResponse<T>).data as T;
+  }
+  return response as T;
+}
+
 const parentService = {
   dashboard: parentDashboardAPI,
   children: childrenAPI,
@@ -899,7 +961,13 @@ const parentService = {
   notifications: notificationsAPI,
   downloads: downloadsAPI,
   schoolInfo: schoolInfoAPI,
-  getMyChildren: childrenAPI.getMyChildren,
+  getMyChildren: async () => unwrapParentResponse(await childrenAPI.getMyChildren()),
+  getExamTimetable: timetableAPI.getExamTimetable,
+  getExamResults: timetableAPI.getExamResults,
+  getExamOverallSummary: timetableAPI.getExamOverallSummary,
+  getExamRules: timetableAPI.getExamRules,
+  downloadExamTimetable: timetableAPI.downloadExamTimetable,
+  downloadReportCard: academicAPI.downloadReportCard,
   getChildMedicalRecord: async (childId: string) => {
     try {
       return await childrenAPI.getChildMedicalInfo(childId);

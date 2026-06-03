@@ -19,29 +19,20 @@ import { clsx } from 'clsx';
 // Rich text editor component
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import type { TeacherMessage as BaseTeacherMessage } from '../../../types/teacher';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 
-interface TeacherMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderRole: string;
+type TeacherMessage = BaseTeacherMessage & {
   senderAvatar?: string;
-  recipientId: string;
-  recipientName: string;
-  recipientRole: string;
-  subject: string;
-  message: string;
   messageHtml: string;
   attachments: MessageAttachment[];
-  isRead: boolean;
   isStarred: boolean;
   isArchived: boolean;
   parentMessageId: string | null;
   replyToId: string | null;
   conversationId: string;
-  createdAt: string;
   readAt: string | null;
-}
+};
 
 interface MessageAttachment {
   id: string;
@@ -388,16 +379,13 @@ const TeacherMessagesPage: React.FC = () => {
     setAttachmentPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const downloadAttachment = async (attachment: MessageAttachment) => {
+  const downloadAttachment = async (attachment: MessageAttachment, messageId?: string) => {
     try {
-      const response = await teacherService.messages.downloadAttachment(attachment.id);
-      const blob = new Blob([response.data], { type: attachment.mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = attachment.fileName;
-      a.click();
-      URL.revokeObjectURL(url);
+      const response = await teacherService.messages.downloadAttachment(
+        messageId || selectedMessage?.id || attachment.id,
+        attachment.id
+      );
+      downloadFromServiceData(response.data, attachment.fileName, attachment.mimeType);
     } catch (error) {
       console.error('Failed to download:', error);
       toast.error('Failed to download file');
@@ -658,7 +646,7 @@ const TeacherMessagesPage: React.FC = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  downloadAttachment(att);
+                                  downloadAttachment(att, message.id);
                                 }}
                                 className="p-1 hover:bg-white hover:bg-opacity-20 rounded"
                               >
@@ -1045,7 +1033,7 @@ const TeacherMessagesPage: React.FC = () => {
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

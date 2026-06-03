@@ -2,44 +2,56 @@ import { AlertTriangle, AlertCircle, CheckCircle, Info, Loader, X } from 'lucide
 import { useEffect } from 'react';
 
 interface ConfirmDialogProps {
-  open: boolean;
+  open?: boolean;
+  isOpen?: boolean;
   title: string;
   message: string;
   confirmLabel?: string;
+  confirmText?: string;
   cancelLabel?: string;
+  cancelText?: string;
   type?: 'danger' | 'default' | 'warning' | 'success';
   icon?: React.ReactNode;
   onConfirm: () => void | Promise<void>;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onClose?: () => void;
   loading?: boolean;
 }
 
 export default function ConfirmDialog({
   open,
+  isOpen,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  confirmText,
+  cancelLabel,
+  cancelText,
   type = 'default',
   icon,
   onConfirm,
   onCancel,
+  onClose,
   loading = false
 }: ConfirmDialogProps) {
+  const resolvedOpen = open ?? isOpen ?? false;
+  const resolvedOnCancel = onCancel ?? onClose ?? (() => undefined);
+  const resolvedConfirmLabel = confirmLabel ?? confirmText ?? 'Confirm';
+  const resolvedCancelLabel = cancelLabel ?? cancelText ?? 'Cancel';
   useEffect(() => {
-    if (!open) return undefined;
+    if (!resolvedOpen) return undefined;
 
     const closeFromEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !loading) {
-        onCancel();
+        resolvedOnCancel();
       }
     };
 
     document.addEventListener('keydown', closeFromEscape, true);
     return () => document.removeEventListener('keydown', closeFromEscape, true);
-  }, [onCancel, open, loading]);
+  }, [resolvedOnCancel, resolvedOpen, loading]);
 
-  if (!open) return null;
+  if (!resolvedOpen) return null;
 
   const getIcon = () => {
     if (icon) return icon;
@@ -93,7 +105,7 @@ export default function ConfirmDialog({
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) {
-          onCancel();
+          resolvedOnCancel();
         }
       }}
     >
@@ -104,7 +116,7 @@ export default function ConfirmDialog({
         aria-labelledby="confirm-title" 
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button className="confirm-dialog__close" type="button" onClick={onCancel} disabled={loading} aria-label="Close dialog">
+        <button className="confirm-dialog__close" type="button" onClick={resolvedOnCancel} disabled={loading} aria-label="Close dialog">
           <X size={17} />
         </button>
 
@@ -119,12 +131,12 @@ export default function ConfirmDialog({
         </div>
 
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel} disabled={loading} className="confirm-dialog__cancel">
-            {cancelLabel}
+          <button type="button" onClick={resolvedOnCancel} disabled={loading} className="confirm-dialog__cancel">
+            {resolvedCancelLabel}
           </button>
           <button type="button" onClick={onConfirm} disabled={loading} className={`confirm-dialog__confirm ${colors.button}`}>
             {loading && <Loader size={16} className="animate-spin" />}
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </section>

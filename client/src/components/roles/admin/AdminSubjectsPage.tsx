@@ -112,7 +112,7 @@ export default function AdminSubjectsPage() {
       if (data.isPublic !== undefined) {
         const subject = subjects.find(s => s.id === id);
         if (subject) {
-          toast.info(`Subject is now ${data.isPublic ? 'visible to public' : 'hidden from public'}`);
+          toast(`Subject is now ${data.isPublic ? 'visible to public' : 'hidden from public'}`);
         }
       }
       

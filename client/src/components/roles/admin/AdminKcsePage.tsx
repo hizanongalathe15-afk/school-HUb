@@ -48,7 +48,7 @@ interface ExamType {
   name: string;
   code: string;
   description: string;
-  gradeSystem: 'A-E' | 'A-F' | '1-12' | 'Percentage';
+  gradeSystem: 'A-E' | 'A-F' | 'A*-G' | '1-12' | '1-7' | 'Percentage';
   maxPoints: number;
 }
 
@@ -80,64 +80,27 @@ export default function AdminKcsePage() {
 
   const years = ['2025', '2024', '2023', '2022', '2021', '2020'];
 
-  // Mock data for demonstration (in production, this comes from API)
-  const loadMockData = async (year: string, examType: string) => {
+  const loadExamData = async (year: string, examType: string) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const mockData: ExamYearData = {
-      year: parseInt(year),
-      examType: examType,
-      totalCandidates: 342,
-      meanScore: year === '2025' ? 7.2 : year === '2024' ? 6.8 : 6.5,
-      meanGrade: 'B-',
-      topStudent: 'Mwangi Kamau',
-      topScore: 82,
-      universityQualification: 187,
-      distinctions: 45,
-      credits: 156,
-      passes: 112,
-      failures: 29,
-      subjectPerformance: {
-        'Mathematics': { mean: 68.5, grade: 'B' },
-        'English': { mean: 72.3, grade: 'B+' },
-        'Kiswahili': { mean: 70.1, grade: 'B' },
-        'Biology': { mean: 65.8, grade: 'B-' },
-        'Chemistry': { mean: 62.4, grade: 'B-' },
-        'Physics': { mean: 60.2, grade: 'C+' },
-        'History': { mean: 71.5, grade: 'B' },
-        'Geography': { mean: 69.8, grade: 'B' },
-      },
-      genderBreakdown: { male: 178, female: 164 },
-      gradeDistribution: {
-        'A': 12, 'A-': 23, 'B+': 35, 'B': 48, 'B-': 52, 
-        'C+': 67, 'C': 45, 'C-': 32, 'D+': 18, 'D': 8, 'E': 2
+    try {
+      const response = await reportsService.getKcseExamSummary(year, examType);
+      setExamData(response?.examData || null);
+      setResults(Array.isArray(response?.results) ? response.results : []);
+      if (!response?.examData) {
+        toast('No exam records found for this year yet. Upload or enter results first.');
       }
-    };
-    
-    const mockResults: ExamResult[] = Array.from({ length: 50 }, (_, i) => ({
-      id: `STU${1000 + i}`,
-      studentName: `Student ${i + 1}`,
-      admissionNumber: `ADM${2024000 + i}`,
-      gender: i % 2 === 0 ? 'M' : 'F',
-      subjectGrades: {
-        'Math': ['A', 'B+', 'B', 'C+'][Math.floor(Math.random() * 4)],
-        'English': ['A-', 'B+', 'B', 'C+'][Math.floor(Math.random() * 4)],
-        'Kiswahili': ['B+', 'B', 'C+', 'C'][Math.floor(Math.random() * 4)],
-      },
-      totalPoints: Math.floor(Math.random() * 84),
-      meanGrade: ['A', 'B+', 'B', 'C+', 'C'][Math.floor(Math.random() * 5)],
-      rank: i + 1
-    }));
-    
-    setExamData(mockData);
-    setResults(mockResults);
-    setLoading(false);
+    } catch {
+      toast.error('Failed to load exam data');
+      setExamData(null);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (showResults) {
-      loadMockData(selectedYear, selectedExamType);
+      void loadExamData(selectedYear, selectedExamType);
     }
   }, [selectedYear, selectedExamType, showResults]);
 
@@ -153,10 +116,9 @@ export default function AdminKcsePage() {
       URL.revokeObjectURL(url);
       toast.success(`${selectedExamType} analysis for ${selectedYear} generated`);
       setShowResults(true);
-    } catch { 
+    } catch {
       toast.error('Failed to generate analysis');
-      // Load mock data for demo
-      await loadMockData(selectedYear, selectedExamType);
+      await loadExamData(selectedYear, selectedExamType);
       setShowResults(true);
     } finally {
       setLoading(false);

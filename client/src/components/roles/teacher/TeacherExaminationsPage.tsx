@@ -18,6 +18,7 @@ import { Spinner } from '../../ui/Spinner';
 import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 import { clsx } from 'clsx';
 
 interface ExamFormData {
@@ -284,13 +285,10 @@ export default function TeacherExaminationsPage() {
   const exportResults = async (examId: string, format: 'excel' | 'pdf' | 'csv') => {
     try {
       const response = await teacherService.examinations.exportExamResults(examId, format);
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `exam_results_${examId}_${new Date().toISOString().split('T')[0]}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(
+        response.data,
+        `exam_results_${examId}_${new Date().toISOString().split('T')[0]}.${format}`
+      );
       toast.success(`Results exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);

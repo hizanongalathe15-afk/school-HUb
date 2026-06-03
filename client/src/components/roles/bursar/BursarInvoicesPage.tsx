@@ -357,7 +357,7 @@ const BursarInvoicesPage: React.FC = () => {
               ))}
               {invoices.length === 0 && (
                 <tr>
-                  <td colspan="7" className="px-6 py-4 text-center text-amber-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-amber-500">
                     No invoices found
                   </td>
                 </tr>
@@ -621,7 +621,7 @@ const BursarInvoicesPage: React.FC = () => {
 export default BursarInvoicesPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;

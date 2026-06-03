@@ -31,7 +31,7 @@ export default function AdminAcademicReportsPage() {
   const [draggedFiles, setDraggedFiles] = useState<File[]>([]);
   const [showDragOverlay, setShowDragOverlay] = useState(false);
 
-  const reportCategories = [
+  const reportCategories: Array<{ id: string; title: string; icon: React.ReactNode; reports: Report[] }> = [
     {
       id: 'academic',
       title: 'Academic Reports',

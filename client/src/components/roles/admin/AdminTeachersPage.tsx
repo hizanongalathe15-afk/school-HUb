@@ -18,7 +18,7 @@ import {
   Gauge, Gauge as Speedometer, Timer, Hourglass, Timer as Stopwatch
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { userManagementService, academicManagementService } from '../../../services/adminService';
+import { userManagementService, academicManagementService, teacherTrackingService } from '../../../services/adminService';
 import type { AdminUser } from '../../../types/admin';
 import { useConfirmationDialog } from '../../../hooks/useConfirmationDialog';
 import ConfirmDialog from '../../ui/ConfirmDialog';
@@ -617,16 +617,17 @@ export default function AdminTeachersPage() {
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const getField = (name: string) => String(formData.get(name) ?? '');
                 const data = {
-                  firstName: formData.get('firstName'),
-                  lastName: formData.get('lastName'),
-                  email: formData.get('email'),
-                  phone: formData.get('phone'),
-                  employeeId: formData.get('employeeId'),
-                  specialization: formData.get('specialization'),
-                  subjects: (formData.get('subjects') as string)?.split(',').map(s => s.trim()),
-                  assignedClasses: (formData.get('assignedClasses') as string)?.split(',').map(c => c.trim()),
-                  status: formData.get('status')
+                  firstName: getField('firstName'),
+                  lastName: getField('lastName'),
+                  email: getField('email'),
+                  phone: getField('phone'),
+                  employeeId: getField('employeeId'),
+                  specialization: getField('specialization'),
+                  subjects: getField('subjects').split(',').map(s => s.trim()).filter(Boolean),
+                  assignedClasses: getField('assignedClasses').split(',').map(c => c.trim()).filter(Boolean),
+                  status: getField('status')
                 };
                 if (editingTeacher) {
                   await userManagementService.updateUser(editingTeacher.id, data);

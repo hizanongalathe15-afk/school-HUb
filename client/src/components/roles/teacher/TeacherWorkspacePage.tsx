@@ -15,6 +15,7 @@ import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Spinner } from '../../ui/Spinner';
 import toast from 'react-hot-toast';
+import { downloadFromServiceData } from '../../../utils/fileDownload';
 import { clsx } from 'clsx';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -339,13 +340,10 @@ const TeacherWorkspacePage: React.FC<TeacherWorkspacePageProps> = ({ section, ti
         item: selectedItem,
         format,
       });
-      const blob = new Blob([response.data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${section}_${selectedItem}_${new Date().toISOString().split('T')[0]}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadFromServiceData(
+        response,
+        `${section}_${selectedItem}_${new Date().toISOString().split('T')[0]}.${format}`
+      );
       toast.success(`Exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Failed to export:', error);
@@ -1006,7 +1004,7 @@ const TeacherWorkspacePage: React.FC<TeacherWorkspacePageProps> = ({ section, ti
       <ConfirmDialog
         isOpen={confirmation.isOpen}
         onClose={confirmation.cancel}
-        onConfirm={confirmation.confirm}
+        onConfirm={confirmation.handleConfirm}
         title={confirmation.config.title}
         message={confirmation.config.message}
         confirmText={confirmation.config.confirmText}

@@ -76,14 +76,14 @@ export default function AdminSettingsPage() {
     try {
       const data = await systemSettingsService.getSettings();
       setSettings(data);
-      const [keys, hooks, backups] = await Promise.all([
+      const [keysResult, hooksResult, backupsResult] = await Promise.allSettled([
         systemSettingsService.getApiKeys(),
         systemSettingsService.getWebhooks(),
         systemSettingsService.getBackupHistory()
       ]);
-      setApiKeys(keys);
-      setWebhooks(hooks);
-      setBackupHistory(backups);
+      setApiKeys(keysResult.status === 'fulfilled' ? keysResult.value : []);
+      setWebhooks(hooksResult.status === 'fulfilled' ? hooksResult.value : []);
+      setBackupHistory(backupsResult.status === 'fulfilled' ? backupsResult.value : []);
     } catch (error) {
       toast.error('Failed to load settings');
     } finally {

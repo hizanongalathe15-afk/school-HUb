@@ -233,10 +233,6 @@ if (loading) {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <NavLink className="back-to-site-btn" to="/">
-            <span className="logout-icon"><Home size={18} /></span>
-            {sidebarOpen && <span>Back to Website</span>}
-          </NavLink>
           <button className="logout-btn" onClick={handleLogout}>
             <span className="logout-icon"><LogOut size={18} /></span>
             {sidebarOpen && <span>Logout</span>}

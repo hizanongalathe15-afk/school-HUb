@@ -247,7 +247,7 @@ const BursarBankingPage: React.FC = () => {
                     ))}
                     {bankAccounts.length === 0 && (
                       <tr>
-                        <td colspan="7" className="px-6 py-4 text-center text-amber-500">
+                        <td colSpan={7} className="px-6 py-4 text-center text-amber-500">
                           No bank accounts found
                         </td>
                       </tr>
@@ -304,7 +304,7 @@ const BursarBankingPage: React.FC = () => {
                       <button
                         onClick={() => {
                           // Open reconciliation modal or redirect to reconciliation tool
-                          toast.info('Reconciliation tool would open here');
+                          toast('Reconciliation tool would open here');
                         }}
                         className="btn btn-primary bg-green-500 hover:bg-green-600 text-white px-4 py-2"
                       >
@@ -378,7 +378,7 @@ const BursarBankingPage: React.FC = () => {
                               ))}
                               {reconciliation.unmatchedTransactions.length === 0 && (
                                 <tr>
-                                  <td colspan="5" className="px-6 py-4 text-center text-amber-500">
+                                  <td colSpan={5} className="px-6 py-4 text-center text-amber-500">
                                     No unmatched transactions
                                   </td>
                                 </tr>
@@ -509,7 +509,7 @@ const BursarBankingPage: React.FC = () => {
 export default BursarBankingPage;
 
 /* Inline button style */
-<style jsx>{`
+<style>{`
   .btn {
     padding: 8px 14px;
     border-radius: 8px;
