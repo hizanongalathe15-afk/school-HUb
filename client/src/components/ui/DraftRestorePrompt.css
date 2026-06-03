@@ -1,0 +1,152 @@
+.draft-restore-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.draft-restore-prompt {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 90%;
+  padding: 24px;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.draft-restore-prompt__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.draft-restore-prompt__icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.draft-restore-prompt__title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  color: #111827;
+}
+
+.draft-restore-prompt__close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.draft-restore-prompt__close:hover {
+  color: #111827;
+}
+
+.draft-restore-prompt__content {
+  margin-bottom: 20px;
+}
+
+.draft-restore-prompt__message {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+}
+
+.draft-restore-prompt__timestamp {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  font-style: italic;
+}
+
+.draft-restore-prompt__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.draft-restore-prompt__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.draft-restore-prompt__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.draft-restore-prompt__btn--discard {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.draft-restore-prompt__btn--discard:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.draft-restore-prompt__btn--restore {
+  background: #10b981;
+  color: white;
+}
+
+.draft-restore-prompt__btn--restore:hover:not(:disabled) {
+  background: #059669;
+}
+
+@media (max-width: 480px) {
+  .draft-restore-prompt {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .draft-restore-prompt__title {
+    font-size: 16px;
+  }
+
+  .draft-restore-prompt__actions {
+    flex-direction: column;
+  }
+
+  .draft-restore-prompt__btn {
+    justify-content: center;
+    width: 100%;
+  }
+}

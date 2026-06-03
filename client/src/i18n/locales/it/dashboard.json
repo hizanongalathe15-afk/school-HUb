@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "dashboard": "Dashboard",
+    "analytics": "Analitica",
+    "systemMetrics": "Metriche di sistema",
+    "activityLogs": "Registri attività",
+    "alerts": "Avvisi",
+    "systemHealth": "Salute del sistema",
+    "totalStudents": "Totale studenti",
+    "totalTeachers": "Totale insegnanti",
+    "libraryBooks": "Libri biblioteca",
+    "feeCollection": "Raccolta quote",
+    "attendanceRate": "Tasso presenza",
+    "disciplineCases": "Casi disciplina",
+    "pendingFees": "Quote in sospeso",
+    "inventoryItems": "Articoli inventario"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "students": "Studenti",
+    "teachers": "Insegnanti",
+    "parents": "Genitori",
+    "staff": "Personale",
+    "classes": "Classi",
+    "subjects": "Materie",
+    "timetable": "Orario",
+    "grades": "Voti",
+    "attendance": "Presenza",
+    "homework": "Compiti",
+    "messages": "Messaggi",
+    "announcements": "Annunci",
+    "settings": "Impostazioni",
+    "profile": "Profilo",
+    "search": "Cerca",
+    "notifications": "Notifiche"
+  },
+  "actions": {
+    "add": "Aggiungi",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "refresh": "Aggiorna",
+    "export": "Esporta",
+    "import": "Importa",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "clear": "Pulisci"
+  },
+  "status": {
+    "active": "Attivo",
+    "draft": "Bozza",
+    "archived": "Archiviato",
+    "pending": "In sospeso"
+  },
+  "priority": {
+    "low": "Basso",
+    "normal": "Normale",
+    "high": "Alto",
+    "critical": "Critico"
+  }
+}

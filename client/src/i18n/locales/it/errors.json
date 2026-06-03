@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "networkError": "Errore di rete. Controlla la tua connessione Internet.",
+    "serverError": "Errore del server. Riprova più tardi.",
+    "unauthorized": "Non autorizzato. Accedi al tuo account.",
+    "forbidden": "Accesso negato. Non hai i permessi.",
+    "notFound": "Elemento richiesto non trovato.",
+    "validationError": "Dati non validi. Controlla il modulo.",
+    "unknownError": "Si è verificato un errore sconosciuto. Riprova.",
+    "fileTooLarge": "Il file è troppo grande. Usa file inferiori a {{size}}.",
+    "invalidFileType": "Tipo di file non valido. Usa: {{types}}.",
+    "uploadFailed": "Caricamento fallito. Riprova.",
+    "saveFailed": "Salvataggio fallito. Riprova.",
+    "deleteFailed": "Eliminazione fallita. Riprova.",
+    "loadFailed": "Caricamento fallito. Aggiorna la pagina."
+  },
+  "success": {
+    "saved": "Salvato con successo.",
+    "deleted": "Eliminato con successo.",
+    "updated": "Aggiornato con successo.",
+    "created": "Creato con successo.",
+    "uploaded": "Caricato con successo."
+  }
+}

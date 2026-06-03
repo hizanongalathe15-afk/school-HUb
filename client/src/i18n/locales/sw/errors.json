@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "networkError": "Kosa la mtandao. Tafadhali hakikisha unaunganishawa na intaneti.",
+    "serverError": "Kosa la seva. Tafadhali jaribu tena baadae.",
+    "unauthorized": "Haujauthathiziwa. Tafadhali ingia au ingia kwenye akaunti yako.",
+    "forbidden": "Huwezi kufikia. Kuna adhabu za urafiki.",
+    "notFound": "Kitu kinachokifikiwa hikosa.",
+    "validationError": "Takwimu zako si sahihi. Tafadhali angalia fomu.",
+    "unknownError": "Kosa linalojulikana. Tafadhali jaribu tena.",
+    "fileTooLarge": "Faili ni kubwa zaidi ya anuwai. Tumia faili zilizo chini ya {{size}}.",
+    "invalidFileType": "Aina ya faili si sahihi. Tumia: {{types}}.",
+    "uploadFailed": "Upakuaji umeshindwa. Tafadhali jaribu tena.",
+    "saveFailed": "Hifadhi imeshindwa. Tafadhali jaribu tena.",
+    "deleteFailed": "Kuleta kumekubali. Tafadhali jaribu tena.",
+    "loadFailed": "Kupakua kumekubali. Tafadhali onyesha upya ukurasa."
+  },
+  "success": {
+    "saved": "Imehifadhiwa kwa mafanikio.",
+    "deleted": "Imefutwa kwa mafanikio.",
+    "updated": "Imehaririwa kwa mafanikio.",
+    "created": "Imetengenezwa kwa mafanikio.",
+    "uploaded": "Imepakiwa kwa mafanikio."
+  }
+}

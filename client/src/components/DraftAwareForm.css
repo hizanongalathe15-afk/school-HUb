@@ -1,0 +1,79 @@
+.draft-aware-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.draft-aware-form__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.draft-aware-form__header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.draft-aware-form__input {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.draft-aware-form__input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.draft-aware-form__input::placeholder {
+  color: #9ca3af;
+}
+
+.draft-aware-form__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.draft-aware-form__btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.draft-aware-form__btn--submit {
+  background: #3b82f6;
+  color: white;
+}
+
+.draft-aware-form__btn--submit:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.draft-aware-form__btn--submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .draft-aware-form__header {
+    flex-direction: column;
+  }
+
+  .draft-aware-form__input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}

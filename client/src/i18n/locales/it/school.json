@@ -1,0 +1,47 @@
+{
+  "school": {
+    "name": "Scuola",
+    "motto": "Motto",
+    "vision": "Visione",
+    "mission": "Missione",
+    "established": "Fondata",
+    "phone": "Telefono",
+    "email": "Email",
+    "address": "Indirizzo",
+    "website": "Sito web",
+    "location": "Posizione"
+  },
+  "events": {
+    "upcoming": "Eventi imminenti",
+    "past": "Eventi passati",
+    "today": "Oggi",
+    "week": "Questa settimana",
+    "month": "Questo mese",
+    "academicClinic": "Clinica accademica",
+    "sportsFixtures": "Calendario sportivo",
+    "principalBulletin": "Bollettino del preside",
+    "type": {
+      "academic": "Accademico",
+      "sports": "Sportivo",
+      "cultural": "Culturale",
+      "meeting": "Riunione"
+    },
+    "rsvp": {
+      "required": "Conferma richiesta",
+      "attending": "Parteciperò",
+      "notAttending": "Non parteciperò",
+      "maybe": "Forse"
+    }
+  },
+  "news": {
+    "latest": "Ultimi articoli",
+    "announcements": "Annunci",
+    "bulletin": "Bollettino"
+  },
+  "grades": {
+    "form1": "1ª anno",
+    "form2": "2ª anno",
+    "form3": "3ª anno",
+    "form4": "4ª anno"
+  }
+}

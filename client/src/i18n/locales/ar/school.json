@@ -1,0 +1,47 @@
+{
+  "school": {
+    "name": "School",
+    "motto": "Motto",
+    "vision": "Vision",
+    "mission": "Mission",
+    "established": "Established",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "website": "Website",
+    "location": "Location"
+  },
+  "events": {
+    "upcoming": "Upcoming Events",
+    "past": "Past Events",
+    "today": "Today",
+    "week": "This Week",
+    "month": "This Month",
+    "academicClinic": "Academic Clinic",
+    "sportsFixtures": "Sports Fixtures",
+    "principalBulletin": "Principal Bulletin",
+    "type": {
+      "academic": "Academic",
+      "sports": "Sports",
+      "cultural": "Cultural",
+      "meeting": "Meeting"
+    },
+    "rsvp": {
+      "required": "RSVP Required",
+      "attending": "Attending",
+      "notAttending": "Not Attending",
+      "maybe": "Maybe"
+    }
+  },
+  "news": {
+    "latest": "Latest News",
+    "announcements": "Announcements",
+    "bulletin": "Bulletin"
+  },
+  "grades": {
+    "form1": "Form 1",
+    "form2": "Form 2",
+    "form3": "Form 3",
+    "form4": "Form 4"
+  }
+}

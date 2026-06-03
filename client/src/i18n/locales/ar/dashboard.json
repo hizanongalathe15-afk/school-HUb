@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "systemMetrics": "System Metrics",
+    "activityLogs": "Activity Logs",
+    "alerts": "Alerts",
+    "systemHealth": "System Health",
+    "totalStudents": "Total Students",
+    "totalTeachers": "Total Teachers",
+    "libraryBooks": "Library Books",
+    "feeCollection": "Fee Collection",
+    "attendanceRate": "Attendance Rate",
+    "disciplineCases": "Discipline Cases",
+    "pendingFees": "Pending Fees",
+    "inventoryItems": "Inventory Items"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "teachers": "Teachers",
+    "parents": "Parents",
+    "staff": "Staff",
+    "classes": "Classes",
+    "subjects": "Subjects",
+    "timetable": "Timetable",
+    "grades": "Grades",
+    "attendance": "Attendance",
+    "homework": "Homework",
+    "messages": "Messages",
+    "announcements": "Announcements",
+    "settings": "Settings",
+    "profile": "Profile",
+    "search": "Search",
+    "notifications": "Notifications"
+  },
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear"
+  },
+  "status": {
+    "active": "Active",
+    "draft": "Draft",
+    "archived": "Archived",
+    "pending": "Pending"
+  },
+  "priority": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "critical": "Critical"
+  }
+}

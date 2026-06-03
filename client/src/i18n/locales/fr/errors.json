@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion Internet.",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+    "unauthorized": "Non autorisé. Veuillez vous connecter à votre compte.",
+    "forbidden": "Accès refusé. Vous n'avez pas la permission.",
+    "notFound": "Élément demandé introuvable.",
+    "validationError": "Données invalides. Veuillez vérifier le formulaire.",
+    "unknownError": "Une erreur inconnue s'est produite. Veuillez réessayer.",
+    "fileTooLarge": "Le fichier est trop volumineux. Utilisez des fichiers inférieurs à {{size}}.",
+    "invalidFileType": "Type de fichier invalide. Utilisez : {{types}}.",
+    "uploadFailed": "Échec du téléchargement. Veuillez réessayer.",
+    "saveFailed": "Échec de l'enregistrement. Veuillez réessayer.",
+    "deleteFailed": "Échec de la suppression. Veuillez réessayer.",
+    "loadFailed": "Échec du chargement. Veuillez actualiser la page."
+  },
+  "success": {
+    "saved": "Enregistré avec succès.",
+    "deleted": "Supprimé avec succès.",
+    "updated": "Mis à jour avec succès.",
+    "created": "Créé avec succès.",
+    "uploaded": "Téléchargé avec succès."
+  }
+}

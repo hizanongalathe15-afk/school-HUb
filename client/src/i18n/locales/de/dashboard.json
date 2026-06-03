@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "dashboard": "Dashboard",
+    "analytics": "Analytik",
+    "systemMetrics": "Systemmetriken",
+    "activityLogs": "Aktivitätsprotokolle",
+    "alerts": "Warnungen",
+    "systemHealth": "Systemgesundheit",
+    "totalStudents": "Gesamtstudierende",
+    "totalTeachers": "Gesamtlehrer",
+    "libraryBooks": "Bibliotheksbücher",
+    "feeCollection": "Gebührensammlung",
+    "attendanceRate": "Anwesenheitsrate",
+    "disciplineCases": "Disziplinafälle",
+    "pendingFees": "Ausstehende Gebühren",
+    "inventoryItems": "Bestandsartikel"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "students": "Studierende",
+    "teachers": "Lehrer",
+    "parents": "Eltern",
+    "staff": "Personal",
+    "classes": "Klassen",
+    "subjects": "Fächer",
+    "timetable": "Stundenplan",
+    "grades": "Noten",
+    "attendance": "Anwesenheit",
+    "homework": "Hausaufgaben",
+    "messages": "Nachrichten",
+    "announcements": "Ankündigungen",
+    "settings": "Einstellungen",
+    "profile": "Profil",
+    "search": "Suche",
+    "notifications": "Benachrichtigungen"
+  },
+  "actions": {
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "refresh": "Aktualisieren",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "clear": "Löschen"
+  },
+  "status": {
+    "active": "Aktiv",
+    "draft": "Entwurf",
+    "archived": "Archiviert",
+    "pending": "Ausstehend"
+  },
+  "priority": {
+    "low": "Niedrig",
+    "normal": "Normal",
+    "high": "Hoch",
+    "critical": "Kritisch"
+  }
+}

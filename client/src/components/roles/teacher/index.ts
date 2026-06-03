@@ -1,0 +1,27 @@
+// client/src/components/roles/teacher/index.ts
+export { default as TeacherDashboard } from './TeacherDashboard';
+export { default as TeacherDashboardHome } from './TeacherDashboardHome';
+export { default as TeacherSidebar } from './TeacherSidebar';
+export { default as TeacherWorkspacePage } from './TeacherWorkspacePage';
+export { default as TeacherClassesPage } from './TeacherClassesPage';
+export { default as TeacherStudentsPage } from './TeacherStudentsPage';
+export { default as TeacherAttendancePage } from './TeacherAttendancePage';
+export { default as TeacherGradesPage } from './TeacherGradesPage';
+export { default as TeacherHomeworkPage } from './TeacherHomeworkPage';
+export { default as TeacherTimetablePage } from './TeacherTimetablePage';
+export { default as TeacherDisciplinePage } from './TeacherDisciplinePage';
+export { default as TeacherMessagesPage } from './TeacherMessagesPage';
+export { default as TeacherLessonsPage } from './TeacherLessonsPage';
+export { default as TeacherExaminationsPage } from './TeacherExaminationsPage';
+export { default as TeacherResourcesPage } from './TeacherResourcesPage';
+export { default as TeacherCocurricularPage } from './TeacherCocurricularPage';
+export { default as TeacherDevelopmentPage } from './TeacherDevelopmentPage';
+export { default as TeacherReportsPage } from './TeacherReportsPage';
+export { default as TeacherNotificationsPage } from './TeacherNotificationsPage';
+export { default as TeacherProfile } from './TeacherProfile';
+export { default as TeacherSupportPage } from './TeacherSupportPage';
+export { default as TeacherAnnouncementsPage } from './TeacherAnnouncementsPage';
+export { default as TeacherMeetingsPage } from './TeacherMeetingsPage';
+export { default as TeacherAlertsPage } from './TeacherAlertsPage';
+export { default as TeacherTasksPage } from './TeacherTasksPage';
+export { default as TeachersSubmission } from './TeachersSubmission';

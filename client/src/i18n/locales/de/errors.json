@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.",
+    "serverError": "Serverfehler. Bitte versuchen Sie es später erneut.",
+    "unauthorized": "Nicht autorisiert. Bitte melden Sie sich an.",
+    "forbidden": "Zugriff verweigert. Sie haben keine Berechtigung.",
+    "notFound": "Gesuchter Eintrag nicht gefunden.",
+    "validationError": "Ungültige Daten. Bitte überprüfen Sie das Formular.",
+    "unknownError": "Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "fileTooLarge": "Datei ist zu groß. Verwenden Sie Dateien unter {{size}}.",
+    "invalidFileType": "Ungültiger Dateityp. Verwenden Sie: {{types}}.",
+    "uploadFailed": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "saveFailed": "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "deleteFailed": "Löschen fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "loadFailed": "Laden fehlgeschlagen. Bitte aktualisieren Sie die Seite."
+  },
+  "success": {
+    "saved": "Erfolgreich gespeichert.",
+    "deleted": "Erfolgreich gelöscht.",
+    "updated": "Erfolgreich aktualisiert.",
+    "created": "Erfolgreich erstellt.",
+    "uploaded": "Erfolgreich hochgeladen."
+  }
+}

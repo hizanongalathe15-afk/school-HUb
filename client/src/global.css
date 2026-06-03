@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './design-system.css';
+@import './styles.css';
+@import './components/roles/shared/role-shell.css';
+@import './components/roles/admin/admin.css';
+@import './components/roles/parent/parent.css';
+@import './components/roles/teacher/teacher.css';
+@import './components/roles/bursar/bursar.css';
+@import './components/roles/storekeeper/storekeeper.css';
+
+/* RTL Support for Arabic and other RTL languages */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+html[dir="ltr"] body {
+  text-align: left;
+}
+
+/* RTL Utility Classes */
+[dir="rtl"] .rtl\:ml-0 { margin-left: 0; }
+[dir="rtl"] .rtl\:ml-2 { margin-left: 0.5rem; }
+[dir="rtl"] .rtl\:ml-4 { margin-left: 1rem; }
+[dir="rtl"] .rtl\:ml-auto { margin-left: auto; }
+[dir="rtl"] .rtl\:mr-0 { margin-right: 0; }
+[dir="rtl"] .rtl\:mr-auto { margin-right: auto; }
+[dir="rtl"] .rtl\:pl-0 { padding-left: 0; }
+[dir="rtl"] .rtl\:pr-4 { padding-right: 1rem; }
+[dir="rtl"] .rtl\:left-auto { left: auto; }
+[dir="rtl"] .rtl\:right-0 { right: 0; }
+
+@keyframes slide-in-from-top-2 {
+  from {
+    transform: translateY(-0.5rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-to-top-2 {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-0.5rem);
+    opacity: 0;
+  }
+}
+
+.animate-in {
+  animation: slide-in-from-top-2 0.3s ease-out;
+}
+
+.animate-out {
+  animation: slide-out-to-top-2 0.3s ease-in;
+}

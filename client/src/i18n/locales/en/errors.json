@@ -1,0 +1,24 @@
+{
+  "errors": {
+    "networkError": "Network error. Please check your internet connection.",
+    "serverError": "Server error. Please try again later.",
+    "unauthorized": "Unauthorized. Please log in to your account.",
+    "forbidden": "Access denied. You don't have permission.",
+    "notFound": "Requested item not found.",
+    "validationError": "Invalid data. Please check the form.",
+    "unknownError": "Unknown error occurred. Please try again.",
+    "fileTooLarge": "File is too large. Use files under {{size}}.",
+    "invalidFileType": "Invalid file type. Use: {{types}}.",
+    "uploadFailed": "Upload failed. Please try again.",
+    "saveFailed": "Save failed. Please try again.",
+    "deleteFailed": "Delete failed. Please try again.",
+    "loadFailed": "Failed to load. Please refresh the page."
+  },
+  "success": {
+    "saved": "Saved successfully.",
+    "deleted": "Deleted successfully.",
+    "updated": "Updated successfully.",
+    "created": "Created successfully.",
+    "uploaded": "Uploaded successfully."
+  }
+}

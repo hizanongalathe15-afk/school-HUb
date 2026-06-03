@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "dashboard": "Tableau de bord",
+    "analytics": "Analytique",
+    "systemMetrics": "Métriques système",
+    "activityLogs": "Journaux d'activité",
+    "alerts": "Alertes",
+    "systemHealth": "Santé du système",
+    "totalStudents": "Étudiants totaux",
+    "totalTeachers": "Enseignants totaux",
+    "libraryBooks": "Livres de bibliothèque",
+    "feeCollection": "Collecte des frais",
+    "attendanceRate": "Taux de présence",
+    "disciplineCases": "Affaires disciplinaires",
+    "pendingFees": "Frais en attente",
+    "inventoryItems": "Articles d'inventaire"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "students": "Étudiants",
+    "teachers": "Enseignants",
+    "parents": "Parents",
+    "staff": "Personnel",
+    "classes": "Classes",
+    "subjects": "Matières",
+    "timetable": "Emploi du temps",
+    "grades": "Notes",
+    "attendance": "Présence",
+    "homework": "Devoirs",
+    "messages": "Messages",
+    "announcements": "Annonces",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "search": "Rechercher",
+    "notifications": "Notifications"
+  },
+  "actions": {
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "refresh": "Actualiser",
+    "export": "Exporter",
+    "import": "Importer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "clear": "Effacer"
+  },
+  "status": {
+    "active": "Actif",
+    "draft": "Brouillon",
+    "archived": "Archivé",
+    "pending": "En attente"
+  },
+  "priority": {
+    "low": "Basse",
+    "normal": "Normale",
+    "high": "Haute",
+    "critical": "Critique"
+  }
+}

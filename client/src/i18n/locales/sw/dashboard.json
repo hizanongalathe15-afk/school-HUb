@@ -1,0 +1,62 @@
+{
+  "admin": {
+    "dashboard": "Dashibodi",
+    "analytics": "Takwimu",
+    "systemMetrics": "Viashiria vya mfumo",
+    "activityLogs": "Rekodi za shughulikia",
+    "alerts": "Arifa",
+    "systemHealth": "Afya ya mfumo",
+    "totalStudents": "Wanafunzi wote",
+    "totalTeachers": "Walezi wote",
+    "libraryBooks": "Kitabu vya maktaba",
+    "feeCollection": "Ukusanyaji wa ada",
+    "attendanceRate": "Kiwango cha mahudhuriano",
+    "disciplineCases": "Kesi za adil",
+    "pendingFees": "Ada zilizosubiri",
+    "inventoryItems": "Vitu vya stock"
+  },
+  "navigation": {
+    "dashboard": "Dashibodi",
+    "students": "Wanafunzi",
+    "teachers": "Walezi",
+    "parents": "Wazazi",
+    "staff": "Wafanyakazi",
+    "classes": "Madarasa",
+    "subjects": "Masomo",
+    "timetable": "Ratiba",
+    "grades": "Alama",
+    "attendance": "Mahudhuriano",
+    "homework": "Kazi nyumbani",
+    "messages": "Ujumbe",
+    "announcements": "Matangazo",
+    "settings": "Mipangilio",
+    "profile": "Profaili",
+    "search": "Tafuta",
+    "notifications": "Arifa"
+  },
+  "actions": {
+    "add": "Ongeza",
+    "edit": "Hariri",
+    "delete": "Futa",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "refresh": "Onyesha upya",
+    "export": "Hamisha",
+    "import": "Leta",
+    "search": "Tafuta",
+    "filter": "Chuja",
+    "clear": "Osha"
+  },
+  "status": {
+    "active": "Inatumika",
+    "draft": "Hali ya kipande",
+    "archived": "Imehifadhiwa",
+    "pending": "Inasubiri"
+  },
+  "priority": {
+    "low": "Duni",
+    "normal": " Kawiko",
+    "high": "Kasi",
+    "critical": "Muhimu"
+  }
+}

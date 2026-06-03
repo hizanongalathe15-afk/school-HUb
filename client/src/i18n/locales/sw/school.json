@@ -1,0 +1,47 @@
+{
+  "school": {
+    "name": "Shule",
+    "motto": "Kinai moto",
+    "vision": "Maono",
+    "mission": "Misheni",
+    "established": "Ilianzishwa",
+    "phone": "Simu",
+    "email": "Barua pepe",
+    "address": "Anwani",
+    "website": "Tovuti",
+    "location": "Eneo"
+  },
+  "events": {
+    "upcoming": "Matukio yajaaye",
+    "past": "Matukio yaliyopita",
+    "today": "Leo",
+    "week": "Wiki hii",
+    "month": "Mwezi huu",
+    "academicClinic": "Kliniki ya kitaaluma",
+    "sportsFixtures": "Mipangyo ya michezo",
+    "principalBulletin": "Buletini ya mkuu",
+    "type": {
+      "academic": "Kitalauma",
+      "sports": "Michezo",
+      "cultural": "Utamaduni",
+      "meeting": "Mkutano"
+    },
+    "rsvp": {
+      "required": "Hitajiwekea taarifa",
+      "attending": "Ninakuhudhuria",
+      "notAttending": "Sihusikii",
+      "maybe": "Labda"
+    }
+  },
+  "news": {
+    "latest": "Habari mpya",
+    "announcements": "Matangazo",
+    "bulletin": "Buletini"
+  },
+  "grades": {
+    "form1": "Daraja 1",
+    "form2": "Daraja 2",
+    "form3": "Daraja 3",
+    "form4": "Daraja 4"
+  }
+}

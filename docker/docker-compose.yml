@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: school-hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: school_hub
+      POSTGRES_USER: school_hub
+      POSTGRES_PASSWORD: school_hub_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - school_hub_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U school_hub -d school_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  school_hub_postgres:

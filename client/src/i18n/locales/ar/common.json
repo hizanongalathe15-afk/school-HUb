@@ -1,0 +1,140 @@
+{
+  "auth": {
+    "authentication": "المصادقة",
+    "secureAccess": "الوصول الآمن",
+    "signInTitle": "تسجيل الدخول",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "signingIn": "جاري التسجيل",
+    "signIn": "تسجيل الدخول",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "createAccount": "إنشاء حساب",
+    "parentRegistration": "تسجيل الوالدين",
+    "firstName": "الاسم الأول",
+    "lastName": "الاسم الأخير",
+    "phoneNumber": "رقم الهاتف",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "creatingAccount": "جاري إنشاء الحساب",
+    "alreadyRegistered": "هل أنت مسجل بالفعل؟",
+    "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من بيانات اعتمادك.",
+    "registrationFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+    "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل.",
+    "passwordsDoNotMatch": "كلمات المرور غير متطابقة.",
+    "demo": {
+      "admin": "المسؤول",
+      "principal": "المدير",
+      "teacher": "المعلم",
+      "parent": "الوالد",
+      "bursar": "أمين الصندوق",
+      "store": "المخزن"
+    }
+  },
+  "confirmDialog": {
+    "logout": {
+      "title": "تسجيل الخروج؟",
+      "message": "سيؤدي هذا إلى إنهاء جلستك والعودة إلى صفحة تسجيل الدخول.",
+      "confirm": "تسجيل الخروج",
+      "cancel": "إلغاء",
+      "button": "تسجيل الخروج"
+    }
+  },
+  "common": {
+    "select_language": "اختر لغة",
+    "login": "تسجيل الدخول",
+    "main_navigation": "التنقل الرئيسي",
+    "toggle_navigation": "تبديل التنقل",
+    "mobile_navigation": "التنقل على الهاتف",
+    "openAdmissions": "الالتحاق مفتوح",
+    "homeLabel": "الصفحة الرئيسية لـ {{schoolName}}",
+    "site_footer": "تذييل الموقع",
+    "language": {
+      "english": "English",
+      "kiswahili": "Kiswahili",
+      "french": "Français",
+      "german": "Deutsch",
+      "italian": "Italiano",
+      "arabic": "العربية"
+    },
+    "copyright": "© {{year}} {{schoolName}}. جميع الحقوق محفوظة."
+  },
+  "public": {
+    "gallery": "المعرض",
+    "galleryHeading": "لحظات حقيقية من المدرسة، مساحات التعلم، والنقاط البارزة في المجتمع.",
+    "heroSlides": "شرائح البطل",
+    "showSlide": "إظهار {{title}}",
+    "adRail": "الإعلانات والإعلانات المدرسية",
+    "admissions": {
+      "nowOpen": "مفتوح الآن",
+      "readyToJoin": "هل أنت مستعد للانضمام إلينا؟",
+      "takeFirstStep": "خذ الخطوة الأولى نحو التعليم الاستثنائي. يتم مراجعة الطلبات على أساس مستمر.",
+      "startApplication": "بدء التقديم",
+      "bookVisit": "حجز زيارة",
+      "noCommitment": "لا يوجد التزام. الجولات مجانية وتستغرق حوالي 45 دقيقة."
+    },
+    "pageNotFound": "الصفحة غير موجودة",
+    "pageNotAvailable": "هذه الصفحة غير متاحة",
+    "loading": "جاري التحميل..."
+  },
+  "admissions": {
+    "openingEmailClient": "جاري فتح عميل البريد الإلكتروني...",
+    "unableOpenEmail": "لا يمكن فتح البريد الإلكتروني",
+    "openingDialer": "جاري فتح لوحة الاتصال...",
+    "unableOpenDialer": "لا يمكن فتح لوحة الاتصال",
+    "emailSubject": "استفسار القبول لـ {{schoolName}}",
+    "emailBody": "مرحبا،%0A%0A أنا مهتم بمعرفة المزيد عن الالتحاق بـ {{schoolName}}."
+  },
+  "buttons": {
+    "add": "إضافة",
+    "edit": "تحرير",
+    "delete": "حذف",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "refresh": "تحديث",
+    "export": "تصدير",
+    "exportSelected": "تصدير المحددة",
+    "duplicate": "نسخ",
+    "close": "إغلاق",
+    "create": "إنشاء",
+    "apply": "تطبيق"
+  },
+  "status": {
+    "active": "نشط",
+    "draft": "مسودة",
+    "archived": "مؤرشف",
+    "pending": "قيد الانتظار",
+    "attention": "انتباه"
+  },
+  "priority": {
+    "low": "منخفض",
+    "normal": "عادي",
+    "high": "عالي",
+    "critical": "حرج"
+  },
+  "landing": {
+    "schoolName": "أكاديمية School Hub",
+    "schoolTagline": "المعرفة والشخصية والخدمة",
+    "schoolSummary": "مجتمع مدرسي متصل للمتعلمين والموظفين والوالدين.",
+    "liveCampusLabel": "الحرم الجامعي المباشر",
+    "todayLabel": "اليوم",
+    "admissionsSteps": [
+      {
+        "title": "التقديم عبر الإنترنت",
+        "description": "قدم طلبك وتفاصيل المتعلم."
+      },
+      {
+        "title": "زيارة الحرم الجامعي",
+        "description": "التقابل مع فريق القبول وجولة في الحرم الجامعي."
+      },
+      {
+        "title": "التقييم",
+        "description": "أكمل مراجعة الاستعداد الموجزة."
+      },
+      {
+        "title": "الترحيب",
+        "description": "استقبل العرض والانضمام لمجتمع المدرسة."
+      }
+    ]
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "school": {
+    "name": "School Hub Academy",
+    "tagline": "Where bright futures begin",
+    "summary": "A modern learning community combining strong academics, creative exploration, character growth, and parent-connected school operations.",
+    "contact": {
+      "email": "admissions@schoolhub.ac.ke",
+      "phone": "+254 700 000 000",
+      "location": "Nairobi, Kenya"
+    }
+  },
+  "navigation": [
+    { "label": "Home", "href": "/" },
+    {
+      "label": "About Us",
+      "href": "/about",
+      "children": [
+        { "label": "About the School", "href": "/about-school" },
+        { "label": "Infrastructure", "href": "/infrastructure" },
+        { "label": "Our Achievements", "href": "/achievements" },
+        { "label": "Location", "href": "/location" },
+        { "label": "Alumni", "href": "/alumni" },
+        { "label": "Board of Management", "href": "/board-of-management" },
+        { "label": "PTA Members", "href": "/pta-members" },
+        { "label": "Senior Management", "href": "/senior-management" },
+        { "label": "Teaching Staff", "href": "/teaching-staff" }
+      ]
+    },
+    {
+      "label": "Departments",
+      "href": "/academics",
+      "children": [
+        { "label": "Languages Department", "href": "/departments/languages" },
+        { "label": "Sciences Department", "href": "/departments/sciences" },
+        { "label": "Technical & Creative Arts Department", "href": "/departments/technical-creative-arts" },
+        { "label": "Guidance & Counselling Department", "href": "/departments/guidance-counselling" },
+        { "label": "Humanities Department", "href": "/departments/humanities" },
+        { "label": "Boarding Department", "href": "/departments/boarding" },
+        { "label": "Mathematics Department", "href": "/departments/mathematics" },
+        { "label": "Co-Curricular Department", "href": "/departments/co-curricular" }
+      ]
+    },
+    {
+      "label": "Students",
+      "href": "/life",
+      "children": [
+        { "label": "Form 1", "href": "/students/form-1" },
+        { "label": "Form 2", "href": "/students/form-2" },
+        { "label": "Form 3", "href": "/students/form-3" },
+        { "label": "Form 4", "href": "/students/form-4" }
+      ]
+    },
+    {
+      "label": "Media",
+      "href": "/gallery",
+      "children": [
+        { "label": "Gallery", "href": "/gallery" },
+        { "label": "Downloads", "href": "/downloads" },
+        { "label": "Events", "href": "/events" }
+      ]
+    },
+    { "label": "Contacts", "href": "/contact" }
+  ],
+  "heroSlides": [
+    {
+      "title": "School Hub Academy",
+      "subtitle": "Where bright futures begin",
+      "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1800&q=85",
+      "accent": "blue"
+    },
+    {
+      "title": "Curious Minds",
+      "subtitle": "Hands-on learning for confident problem solvers",
+      "image": "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1800&q=85",
+      "accent": "violet"
+    },
+    {
+      "title": "A Connected Campus",
+      "subtitle": "Students, teachers, and families moving together",
+      "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1800&q=85",
+      "accent": "teal"
+    }
+  ],
+  "stats": [
+    { "value": "98%", "label": "Parent satisfaction" },
+    { "value": "24", "label": "Clubs and societies" },
+    { "value": "16:1", "label": "Learner teacher ratio" },
+    { "value": "12+", "label": "Digital school modules" }
+  ],
+  "sections": {
+    "about": {
+      "eyebrow": "About the school"
+    },
+    "values": {
+      "eyebrow": "Learning culture",
+      "heading": "Colorful learning, serious outcomes."
+    },
+    "programs": {
+      "eyebrow": "Academic pathways",
+      "heading": "Programmes for every stage."
+    },
+    "life": {
+      "eyebrow": "Student life",
+      "heading": "Balanced days with academics, creativity, leadership, and wellness.",
+      "image": "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1800&q=85"
+    },
+    "admissions": {
+      "eyebrow": "Admissions"
+    }
+  },
+  "values": [
+    {
+      "title": "Critical Thinking",
+      "description": "Learners ask better questions, test ideas, and present their thinking with clarity.",
+      "image": "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=1200&q=85",
+      "accent": "cyan"
+    },
+    {
+      "title": "Character Growth",
+      "description": "Respect, responsibility, service, and resilience are practiced through daily school life.",
+      "image": "https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1200&q=85",
+      "accent": "rose"
+    },
+    {
+      "title": "Creative Confidence",
+      "description": "Art, technology, music, sports, and clubs give every learner a place to shine.",
+      "image": "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=1200&q=85",
+      "accent": "amber"
+    },
+    {
+      "title": "Global Perspective",
+      "description": "Students learn to collaborate across cultures while staying rooted in local community.",
+      "image": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=85",
+      "accent": "indigo"
+    }
+  ],
+  "programs": [
+    {
+      "name": "Lower School",
+      "level": "Grades 1-4",
+      "description": "Strong literacy, numeracy, discovery science, and expressive learning routines."
+    },
+    {
+      "name": "Middle School",
+      "level": "Grades 5-8",
+      "description": "Project-based academics, leadership habits, clubs, and guided digital learning."
+    },
+    {
+      "name": "Senior School",
+      "level": "Grades 9-12",
+      "description": "Exam readiness, mentorship, career pathways, sports, and service learning."
+    }
+  ],
+  "studentLife": [
+    "STEM labs and innovation challenges",
+    "Debate, music, drama, and visual arts",
+    "Football, athletics, swimming, and wellness",
+    "Community service and leadership councils"
+  ],
+  "admissions": {
+    "enabled": true,
+    "heading": "Admissions are open",
+    "text": "Book a visit, meet the academic team, and receive a guided pathway for your child's entry level.",
+    "primaryAction": "Start Application",
+    "secondaryAction": "Book a Tour"
+  },
+  "footer": {
+    "summary": "School Hub Academy keeps learners, families, and staff connected through one modern school platform.",
+    "columns": [
+      {
+        "heading": "School",
+        "links": [
+          { "label": "About Us", "href": "/about-school" },
+          { "label": "Download", "href": "/downloads" },
+          { "label": "Senior Management", "href": "/senior-management" },
+          { "label": "Teaching Staff", "href": "/teaching-staff" },
+          { "label": "PTA Members", "href": "/pta-members" }
+        ]
+      },
+      {
+        "heading": "Materials and Assignments",
+        "links": [
+          { "label": "Form 1", "href": "/students/form-1" },
+          { "label": "Form 2", "href": "/students/form-2" },
+          { "label": "Form 3", "href": "/students/form-3" },
+          { "label": "Form 4", "href": "/students/form-4" }
+        ]
+      },
+      {
+        "heading": "Departments",
+        "links": [
+          { "label": "Co-Curricular Department", "href": "/departments/co-curricular" },
+          { "label": "Guidance & Counselling Department", "href": "/departments/guidance-counselling" },
+          { "label": "Humanities Department", "href": "/departments/humanities" },
+          { "label": "Languages Department", "href": "/departments/languages" },
+          { "label": "Mathematics Department", "href": "/departments/mathematics" },
+          { "label": "Sciences Department", "href": "/departments/sciences" },
+          { "label": "Technical & Creative Arts Department", "href": "/departments/technical-creative-arts" },
+          { "label": "Boarding Department", "href": "/departments/boarding" }
+        ]
+      }
+    ],
+    "socials": [
+      { "label": "Instagram", "href": "https://instagram.com" },
+      { "label": "TikTok", "href": "https://www.tiktok.com" },
+      { "label": "X", "href": "https://x.com" }
+    ],
+    "bottomText": "School Hub Academy. All rights reserved."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "school": {
+    "name": "Schule",
+    "motto": "Motto",
+    "vision": "Vision",
+    "mission": "Mission",
+    "established": "Gegründet",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "address": "Adresse",
+    "website": "Website",
+    "location": "Standort"
+  },
+  "events": {
+    "upcoming": "Bevorstehende Ereignisse",
+    "past": "Vergangene Ereignisse",
+    "today": "Heute",
+    "week": "Diese Woche",
+    "month": "Diesen Monat",
+    "academicClinic": "Akademische Klinik",
+    "sportsFixtures": "Sportspielpläne",
+    "principalBulletin": "Schulleitungsbulletin",
+    "type": {
+      "academic": "Akademisch",
+      "sports": "Sport",
+      "cultural": "Kulturell",
+      "meeting": "Besprechung"
+    },
+    "rsvp": {
+      "required": "Antwort erforderlich",
+      "attending": "Teilnahme",
+      "notAttending": "Nicht teilnehmen",
+      "maybe": "Vielleicht"
+    }
+  },
+  "news": {
+    "latest": "Neueste Nachrichten",
+    "announcements": "Ankündigungen",
+    "bulletin": "Bulletin"
+  },
+  "grades": {
+    "form1": "1. Klasse",
+    "form2": "2. Klasse",
+    "form3": "3. Klasse",
+    "form4": "4. Klasse"
+  }
+}
