@@ -10,4 +10,9 @@ export default defineConfig({
       '/api': 'http://localhost:4000'
     }
   }
+  ,
+  build: {
+    // Increase chunk size warning limit (in KB) to reduce noisy warnings for large bundles
+    chunkSizeWarningLimit: 2000
+  }
 });
