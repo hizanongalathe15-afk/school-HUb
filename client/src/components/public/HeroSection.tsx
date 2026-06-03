@@ -498,7 +498,7 @@ export default function HeroSection({
         .hero-slide-btn.active { background: color-mix(in srgb, var(--public-gold) 32%, transparent); }
         .hero-slide-btn.active .hero-slide-progress {
           position: absolute;
-          inset-y: 0; left: 0;
+          top: 0; bottom: 0; left: 0;
           width: 0%;
           background: var(--public-gold);
           animation: slideProgress 5.2s linear forwards;

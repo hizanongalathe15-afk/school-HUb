@@ -386,7 +386,7 @@ export default function ContactUs({ content }: PublicContentProps) {
         /* shimmer */
         .cu-shimmer {
           position: absolute;
-          inset-y: 0; left: -100%;
+          top: 0; bottom: 0; left: -100%;
           width: 60%;
           background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.04) 50%, transparent 80%);
           pointer-events: none;

@@ -92,9 +92,13 @@ async function networkFirst(request) {
       cache.put(request, response.clone());
     }
     return response;
-  } catch {
+  } catch (error) {
     const cached = await cache.match(request);
-    return cached || new Response(JSON.stringify({ offline: true, message: 'Offline' }), {
+    if (cached) return cached;
+    if (request.destination === 'video') {
+      return new Response(null, { status: 204 });
+    }
+    return new Response(JSON.stringify({ offline: true, message: 'Offline' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
     });
