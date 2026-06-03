@@ -34,6 +34,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for large media files (videos, audio)
+  if (url.origin === self.location.origin && /\.(mp4|webm|ogg|mp3|wav|m4a)$/i.test(url.pathname)) {
+    event.respondWith(fetch(request).catch(() => new Response('Video unavailable', { status: 503 })));
+    return;
+  }
+
   if (url.origin === self.location.origin && /\.(js|css|woff2?|ttf|eot|svg|png|jpe?g|gif|webp|avif|ico)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(request));
     return;
@@ -94,11 +100,7 @@ async function networkFirst(request) {
     return response;
   } catch (error) {
     const cached = await cache.match(request);
-    if (cached) return cached;
-    if (request.destination === 'video') {
-      return new Response(null, { status: 204 });
-    }
-    return new Response(JSON.stringify({ offline: true, message: 'Offline' }), {
+    return cached || new Response(JSON.stringify({ offline: true, message: 'Offline' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
     });
