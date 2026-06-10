@@ -507,12 +507,3 @@ const BursarBankingPage: React.FC = () => {
 };
 
 export default BursarBankingPage;
-
-/* Inline button style */
-<style>{`
-  .btn {
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-weight: 600;
-  }
-`}</style>

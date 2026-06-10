@@ -149,7 +149,15 @@ function LegacyStoreRedirect() {
 // Dashboard redirect component
 function DashboardRedirect() {
   try {
-    const { user } = useAuthStore();
+    const { user, hasHydrated } = useAuthStore();
+    if (!hasHydrated) {
+      return (
+        <main className="app-route-loading" role="status" aria-live="polite">
+          <div className="app-route-loading__spinner" />
+          <span>Loading workspace...</span>
+        </main>
+      );
+    }
     if (!user) return <Navigate to="/" replace />;
     return <Navigate to={getDashboardPathForRole(user.role)} replace />;
   } catch (error) {

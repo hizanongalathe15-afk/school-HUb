@@ -8,7 +8,16 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ roles }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, hasHydrated } = useAuthStore();
+
+  if (!hasHydrated) {
+    return (
+      <div className="app-route-loading" role="status" aria-live="polite">
+        <div className="app-route-loading__spinner" />
+        <span>Loading workspace...</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;

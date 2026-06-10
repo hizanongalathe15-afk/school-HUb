@@ -34,6 +34,7 @@ import { Spinner } from '../../ui/Spinner';
 import { Modal } from '../../ui/Modal';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
+import type { ParentChild, ParentApiResponse } from '../../../types/parent';
 
 interface ExamTimetable {
   id: string;
@@ -98,7 +99,8 @@ interface OverallSummary {
 const ParentExaminations: React.FC = () => {
   const { user } = useAuth();
   const [selectedChildId, setSelectedChildId] = useState<string>('');
-  const [children, setChildren] = useState<any[]>([]);
+  const [children, setChildren] = useState<ParentChild[]>([]);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'timetable' | 'rules' | 'results'>('timetable');
   
   const [examTimetable, setExamTimetable] = useState<ExamTimetable[]>([]);
@@ -117,6 +119,13 @@ const ParentExaminations: React.FC = () => {
     [children, selectedChildId]
   );
 
+  const unwrapResponse = <T,>(response: ParentApiResponse<T> | T): T => {
+    if (response && typeof response === 'object' && 'data' in (response as object)) {
+      return (response as ParentApiResponse<T>).data;
+    }
+    return response as T;
+  };
+
   const loadChildren = useCallback(async () => {
     try {
       const response = await parentService.getMyChildren();
@@ -127,6 +136,8 @@ const ParentExaminations: React.FC = () => {
     } catch (err) {
       console.error('Failed to load children:', err);
       toast.error('Failed to load children data');
+    } finally {
+      setChildrenLoaded(true);
     }
   }, [selectedChildId]);
 
@@ -143,17 +154,17 @@ const ParentExaminations: React.FC = () => {
     try {
       if (activeTab === 'timetable') {
         const data = await parentService.getExamTimetable(selectedChildId);
-        setExamTimetable(data);
+        setExamTimetable(unwrapResponse<ExamTimetable[]>(data) || []);
       } else if (activeTab === 'results') {
         const [resultsData, summaryData] = await Promise.all([
           parentService.getExamResults(selectedChildId),
           parentService.getExamOverallSummary(selectedChildId)
         ]);
-        setExamResults(resultsData);
-        setOverallSummary(summaryData);
+        setExamResults(unwrapResponse<ExamResult[]>(resultsData) || []);
+        setOverallSummary(unwrapResponse<OverallSummary | null>(summaryData));
       } else if (activeTab === 'rules') {
         const rulesData = await parentService.getExamRules();
-        setExamRules(rulesData);
+        setExamRules(unwrapResponse<ExamRules | null>(rulesData));
       }
     } catch (err) {
       setError(`Failed to load ${activeTab} data`);
@@ -195,11 +206,16 @@ const ParentExaminations: React.FC = () => {
     }
   };
 
+  const getChildName = (child?: ParentChild) => {
+    if (!child) return 'selected child';
+    return [child.firstName, child.lastName].filter(Boolean).join(' ') || child.admissionNumber;
+  };
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
         title: 'Exam Timetable',
-        text: `Exam schedule for ${selectedChild?.name}`,
+        text: `Exam schedule for ${getChildName(selectedChild)}`,
         url: window.location.href,
       }).catch(() => {});
     } else {
@@ -243,7 +259,7 @@ const ParentExaminations: React.FC = () => {
 
   const groupedTimetable = useMemo(() => groupByDate(examTimetable), [examTimetable]);
 
-  if (children.length === 0 && !loading) {
+  if (children.length === 0 && childrenLoaded && !loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-6xl mx-auto">
@@ -308,7 +324,7 @@ const ParentExaminations: React.FC = () => {
             >
               {children.map((child) => (
                 <option key={child.id} value={child.id}>
-                  {child.name} - {child.class} ({child.admissionNumber})
+                  {getChildName(child)} - {child.className} ({child.admissionNumber})
                 </option>
               ))}
             </select>

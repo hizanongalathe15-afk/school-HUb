@@ -13,6 +13,394 @@
 @import './components/roles/bursar/bursar.css';
 @import './components/roles/storekeeper/storekeeper.css';
 
+/* Final role UI normalization.
+   Some legacy role styles still use global names such as .btn, .stat-card,
+   .dashboard-header and .user-avatar. Keep the shared role shell stable after
+   all role CSS is loaded so one portal cannot restyle another portal. */
+.app-route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  color: #111827;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(59, 130, 246, 0.16), transparent 30%),
+    linear-gradient(135deg, #f8fafc 0%, #eff6ff 48%, #eef2ff 100%);
+  font-weight: 800;
+}
+
+.app-route-loading__spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(79, 70, 229, 0.18);
+  border-top-color: #4f46e5;
+  border-radius: 999px;
+  animation: role-spin 0.8s linear infinite;
+}
+
+.role-shell {
+  --role-sidebar-width: 256px;
+  --role-sidebar-collapsed: 80px;
+  --role-topbar-height: 74px;
+  --role-bg: #f8fafc;
+  --role-ink: #111827;
+  --role-muted: #64748b;
+  --role-border: rgba(255, 255, 255, 0.46);
+  --role-line: rgba(226, 232, 240, 0.78);
+  --role-panel: rgba(255, 255, 255, 0.72);
+  --role-primary: #4f46e5;
+  --role-primary-dark: #4338ca;
+  --role-accent: #0891b2;
+  --role-danger: #dc2626;
+  --role-success: #059669;
+  --role-warning: #d97706;
+  --role-shadow: 0 18px 48px rgba(79, 70, 229, 0.12);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: var(--role-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(59, 130, 246, 0.16), transparent 30%),
+    radial-gradient(circle at 86% 4%, rgba(14, 145, 178, 0.14), transparent 32%),
+    linear-gradient(135deg, #f8fafc 0%, #eff6ff 48%, #eef2ff 100%);
+}
+
+.role-parent {
+  --role-primary: #2563eb;
+  --role-primary-dark: #1d4ed8;
+  --role-accent: #0d9488;
+}
+
+.role-teacher {
+  --role-primary: #0f766e;
+  --role-primary-dark: #115e59;
+  --role-accent: #7c3aed;
+}
+
+.role-bursar {
+  --role-primary: #4f46e5;
+  --role-primary-dark: #4338ca;
+  --role-accent: #0d9488;
+}
+
+.role-storekeeper {
+  --role-primary: #d97706;
+  --role-primary-dark: #b45309;
+  --role-accent: #2563eb;
+}
+
+.role-shell .role-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--role-sidebar-width);
+  height: 100vh;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.48);
+  color: #374151;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(28px) saturate(1.25);
+  -webkit-backdrop-filter: blur(28px) saturate(1.25);
+}
+
+.role-shell.is-collapsed .role-sidebar {
+  width: var(--role-sidebar-collapsed);
+}
+
+.role-shell .role-main {
+  min-height: 100vh;
+  margin-left: var(--role-sidebar-width);
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.role-shell.is-collapsed .role-main {
+  margin-left: var(--role-sidebar-collapsed);
+}
+
+.role-shell .role-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: var(--role-topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 14px 24px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: 0 10px 34px rgba(15, 23, 42, 0.07);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+}
+
+.role-shell .role-content {
+  width: min(1560px, 100%);
+  margin: 0 auto;
+  padding: 0 24px 28px;
+}
+
+.role-shell .role-page-heading {
+  width: min(1560px, calc(100% - 48px));
+  margin: 24px auto 18px;
+}
+
+.role-shell .role-nav-link,
+.role-shell .role-topbar-user,
+.role-shell .role-icon-button,
+.role-shell .role-logout,
+.role-shell .btn,
+.role-shell button {
+  min-width: 0;
+}
+
+.role-shell .role-nav-link {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #374151;
+  text-decoration: none;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.role-shell .role-nav-link:hover {
+  color: var(--role-primary);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.role-shell .role-nav-link.active {
+  color: #fff;
+  background: linear-gradient(90deg, var(--role-primary), var(--role-accent));
+  box-shadow: 0 16px 34px rgba(79, 70, 229, 0.24);
+}
+
+.role-shell .role-nav-link span,
+.role-shell .role-user-copy span,
+.role-shell .role-user-copy small,
+.role-shell .role-topbar-user strong,
+.role-shell .role-topbar-user small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-shell .role-icon-button,
+.role-shell .role-mobile-trigger {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+}
+
+.role-shell .role-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.role-shell .btn,
+.role-shell .ui-button,
+.role-shell [class*="btn-"] {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.role-shell .btn-primary,
+.role-shell .ui-button--primary {
+  border-color: transparent;
+  background: var(--role-primary);
+  color: #fff;
+}
+
+.role-shell .btn-secondary,
+.role-shell .btn-outline,
+.role-shell .ui-button--secondary {
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--role-ink);
+}
+
+.role-shell .bg-white,
+.role-shell .card,
+.role-shell .dashboard-card,
+.role-shell .stat-card,
+.role-shell .children-selector {
+  border-radius: 8px;
+}
+
+.role-parent .space-y-6 > .min-h-screen,
+.role-parent .role-content > .min-h-screen,
+.role-parent .role-content > .space-y-6,
+.role-parent .role-content > div,
+.role-teacher .role-content > div,
+.role-bursar .role-content > div,
+.role-storekeeper .role-content > div {
+  min-height: auto;
+}
+
+.role-parent .role-content > .min-h-screen,
+.role-teacher .role-content > .min-h-screen,
+.role-bursar .role-content > .min-h-screen,
+.role-storekeeper .role-content > .min-h-screen {
+  background: transparent;
+}
+
+.role-parent .role-content .bg-gray-50,
+.role-teacher .role-content .bg-gray-50,
+.role-bursar .role-content .bg-gray-50,
+.role-storekeeper .role-content .bg-gray-50 {
+  background-color: transparent;
+}
+
+.role-parent .role-content .bg-white,
+.role-teacher .role-content .bg-white,
+.role-bursar .role-content .bg-white,
+.role-storekeeper .role-content .bg-white {
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  background-color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+}
+
+.role-bursar .bursar-page {
+  color: #1f2937;
+}
+
+.role-bursar .bursar-page h1,
+.role-bursar .bursar-page h2,
+.role-bursar .bursar-page h3 {
+  color: #312e81;
+}
+
+.role-bursar .bursar-page p,
+.role-bursar .bursar-page td {
+  color: #475569;
+}
+
+.role-bursar .bursar-page th {
+  color: #4f46e5;
+}
+
+.role-bursar .bursar-page .border-amber-100,
+.role-bursar .bursar-page .border-amber-200,
+.role-bursar .bursar-page .border-amber-300 {
+  border-color: rgba(79, 70, 229, 0.18);
+}
+
+.role-bursar .bursar-page .bg-amber-50,
+.role-bursar .bursar-page .bg-amber-100 {
+  background-color: #eef2ff;
+}
+
+.role-bursar .bursar-page .text-amber-500,
+.role-bursar .bursar-page .text-amber-600,
+.role-bursar .bursar-page .text-amber-700,
+.role-bursar .bursar-page .text-amber-800 {
+  color: #4338ca;
+}
+
+.role-bursar .bursar-page .btn-primary {
+  background: #0f766e;
+  color: #fff;
+}
+
+.role-bursar .bursar-page .btn-outline,
+.role-bursar .bursar-page .btn-secondary {
+  border-color: rgba(79, 70, 229, 0.2);
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+@media (max-width: 900px) {
+  .role-shell .role-mobile-trigger {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 45;
+  }
+
+  .role-shell .role-sidebar {
+    transform: translateX(-112%);
+    transition: transform 0.22s ease;
+  }
+
+  .role-shell.mobile-open .role-sidebar {
+    transform: translateX(0);
+  }
+
+  .role-shell .role-main,
+  .role-shell.is-collapsed .role-main {
+    margin-left: 0;
+  }
+
+  .role-shell .role-topbar {
+    position: relative;
+    padding: 14px 12px 14px 70px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .role-shell .role-topbar-search {
+    width: 100%;
+  }
+
+  .role-shell .role-content {
+    padding: 0 12px 18px;
+  }
+
+  .role-shell .role-page-heading {
+    width: calc(100% - 24px);
+    margin-top: 16px;
+  }
+
+  .role-shell .role-topbar-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .role-shell .role-topbar-actions .btn,
+  .role-shell .role-topbar-actions .btn-secondary,
+  .role-shell .role-topbar-actions .btn-primary {
+    width: 100%;
+  }
+
+  .role-shell .role-page-heading {
+    display: grid;
+    gap: 10px;
+  }
+}
+
 /* RTL Support for Arabic and other RTL languages */
 html[dir="rtl"] {
   direction: rtl;

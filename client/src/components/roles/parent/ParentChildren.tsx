@@ -45,18 +45,13 @@ const ParentChildren: React.FC = () => {
     try {
       const response = await parentService.children.getMyChildren();
       if (response.success && response.data) {
-        setChildren(response.data);
-        if (response.data.length > 0) {
-          if (selectedChild) {
-            const stillExists = response.data.find(c => c.id === selectedChild.id);
-            if (stillExists) {
-              setSelectedChild(stillExists);
-            } else {
-              setSelectedChild(response.data[0]);
-            }
-          } else {
-            setSelectedChild(response.data[0]);
-          }
+        const nextChildren = response.data;
+        setChildren(nextChildren);
+        if (nextChildren.length > 0) {
+          setSelectedChild((current) => {
+            if (!current) return nextChildren[0];
+            return nextChildren.find((child) => child.id === current.id) || nextChildren[0];
+          });
         } else {
           setSelectedChild(null);
         }
@@ -70,7 +65,7 @@ const ParentChildren: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedChild, t]);
+  }, [t]);
 
   useEffect(() => {
     loadChildren();

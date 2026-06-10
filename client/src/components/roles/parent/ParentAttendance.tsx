@@ -106,13 +106,19 @@ const ParentAttendance: React.FC = () => {
       const res = await parentService.children.getMyChildren();
       if (res?.success && res.data) {
         setChildren(res.data);
-        if (res.data[0]) setSelectedChildId(res.data[0].id);
+        if (res.data[0]) {
+          setSelectedChildId((current) => current || res.data![0].id);
+        } else {
+          setLoading(false);
+        }
       } else {
         setError('Failed to load children data');
+        setLoading(false);
       }
     } catch (err) {
       setError('An error occurred while loading children');
       console.error(err);
+      setLoading(false);
     }
   }, []);
 
@@ -146,7 +152,7 @@ const ParentAttendance: React.FC = () => {
     if (selectedChildId) {
       loadAttendance(selectedChildId);
     }
-  }, [selectedChildId, loadAttendance, currentMonth]);
+  }, [selectedChildId, loadAttendance]);
 
   const getStatusBadge = (status: AttendanceRecord['status']) => {
     const variants = {
@@ -239,6 +245,16 @@ const ParentAttendance: React.FC = () => {
       <div className="min-h-[400px] flex items-center justify-center">
         <Spinner size="lg" showLabel label="Loading attendance data..." />
       </div>
+    );
+  }
+
+  if (!loading && children.length === 0) {
+    return (
+      <Card className="text-center py-12">
+        <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No children linked</h2>
+        <p className="text-gray-600 dark:text-gray-400">Link a child to view attendance records.</p>
+      </Card>
     );
   }
 
